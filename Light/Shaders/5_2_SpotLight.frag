@@ -76,9 +76,11 @@ void main()
 	}
 
 	// Calculate spotlight
-	float theta = dot(lightDir, normalize(-light.direction));
-	float epsilon = (light.cutOff - light.outerCutOff);
-	float intensity = clamp( (theta - light.outerCutOff)/epsilon, 0.0, 1.0);
+	float theta = dot(lightDir, -light.direction);
+	float epsilon =  light.cutOff - light.outerCutOff;
+	float intensity = (theta - light.outerCutOff)/epsilon;
+	intensity = clamp(intensity, 0.0, 1.0);
+
 
 	diffuse *= intensity;
 	specular *= intensity;
@@ -92,5 +94,6 @@ void main()
         
 
 	vec3 result = ambient + diffuse + specular;
+	
 	fragColor = vec4(result, 1.0);
 }

@@ -192,6 +192,10 @@ int main(int argc, char** argv)
 	int running = 1;
 	printf("%s \n", glGetString(GL_VERSION));
 
+	printf("Inner Angle : %f ", cos(radians(12.5f)));
+	printf("Outer Angle : %f \n", cos(radians(17.5f)));
+	printf("Epsilon : %f \n", cos(radians(12.5f)) - cos(radians(17.5f)));
+
 	while (running)
 	{
 		float currentFrame = (float)SDL_GetTicks() * 0.001f;
@@ -217,14 +221,14 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shader->SetActive();
-		vec3 cameraPos = camera->GetPos();
-		vec3 cameraForward = camera->GetForward();
-		//cout << cameraForward.x << cameraForward.y << cameraForward.z << endl;
-		shader->SetVec3("light.position", cameraPos);
-		shader->SetVec3("light.direction", cameraForward);
-		shader->SetFloat("light.cufOff", cos(radians(12.5f)));
+		vec3 camPos = camera->GetPos();
+		vec3 camForward = camera->GetForward();
+		
+		shader->SetVec3("light.position", camPos);
+		shader->SetVec3("light.direction", camForward);
+		shader->SetFloat("light.cutOff", cos(radians(12.5f)));
 		shader->SetFloat("light.outerCutOff", cos(radians(17.5f)));
-		shader->SetVec3("viewPos", cameraPos);
+		shader->SetVec3("viewPos", camPos);
 
 		vec3 lightColor = vec3(1.0f);
 		//lightColor.x = sin(currentFrame * 2.0);

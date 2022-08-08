@@ -88,14 +88,14 @@ void Camera::ProcessMouseMotion(SDL_Event mouseEvent)
 
 void Camera::UpdateCamera()
 {
-	vec3 front;
-	front.x = cos(radians(mYaw)) * cos(radians(mPitch));
-	front.y = sin(radians(mPitch));
-	front.z = sin(radians(mYaw)) * cos(radians(mPitch));
+	vec3 forward;
+	forward.x = cos(radians(mYaw)) * cos(radians(mPitch));
+	forward.y = sin(radians(mPitch));
+	forward.z = sin(radians(mYaw)) * cos(radians(mPitch));
 
-	//printf("Front: %f, %f, %f \n", front.x, front.y, front.z);
 
-	mForward = normalize(front);
+	mForward = normalize(forward);
+	//printf("forward: %f, %f, %f \n", mForward.x, mForward.y, mForward.z);
 }
 
 mat4 Camera::MyLookAt()
