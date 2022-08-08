@@ -10,6 +10,9 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "Light.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 
 using namespace std;
 using namespace glm;
@@ -91,24 +94,33 @@ int main(int argc, char** argv)
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
 	};
 
-	// positions all containers
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
+	// Cube Position
+	vec3 cubePositions[] = {
+		vec3(0.0f,  0.0f,  0.0f),
+		vec3(2.0f,  5.0f, -15.0f),
+		vec3(-1.5f, -2.2f, -2.5f),
+		vec3(-3.8f, -2.0f, -12.3f),
+		vec3(2.4f, -0.4f, -3.5f),
+		vec3(-1.7f,  3.0f, -7.5f),
+		vec3(1.3f, -2.0f, -2.5f),
+		vec3(1.5f,  2.0f, -2.5f),
+		vec3(1.5f,  0.2f, -1.5f),
+		vec3(-1.3f,  1.0f, -1.5f)
 	};
+
+	// Point lights
+	vec3 lightPositions[] = {
+		vec3(0.7f,  0.2f,  2.0f),
+		vec3(2.3f, -3.3f, -4.0f),
+		vec3(-4.0f,  2.0f, -12.0f),
+		vec3(0.0f,  0.0f, -3.0f)
+	};
+
 
 	Shader* shader = new Shader();
 
-	string vertPath = "Shaders/5_2_SpotLight.vert";
-	string fragPath = "Shaders/5_2_SpotLight.frag";
+	string vertPath = "Shaders/6_1_MultiLights.vert";
+	string fragPath = "Shaders/6_1_MultiLights.frag";
 
 	if (!shader->LoadShaderFile(vertPath, fragPath))
 	{
@@ -192,9 +204,37 @@ int main(int argc, char** argv)
 	int running = 1;
 	printf("%s \n", glGetString(GL_VERSION));
 
-	printf("Inner Angle : %f ", cos(radians(12.5f)));
-	printf("Outer Angle : %f \n", cos(radians(17.5f)));
-	printf("Epsilon : %f \n", cos(radians(12.5f)) - cos(radians(17.5f)));
+	// Set up Lights
+
+	// Directional Light
+	vec3 amb = { 0.05f, 0.05f, 0.05f };
+	vec3 diff = { 0.4f, 0.4f, 0.4f };
+	vec3 spec = { 0.5f, 0.5f, 0.5f };
+	vec3 dir = { -0.2f, -1.0f, -0.3f };
+	Light dirLight( amb, diff, spec, dir);
+
+	// Point Lights
+	//amb = { 0.05f, 0.05f, 0.05f };
+	diff = { 0.8f, 0.8f, 0.8f };
+	spec = { 1.0f, 1.0f, 1.0f };
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
+
+	PointLight* pointLights = new PointLight[4];
+
+	for (int i = 0; i < 4; ++i)
+	{
+		pointLights[i] = PointLight(amb, diff, spec, lightPositions[i], constant, linear, quadratic);
+	}
+
+	amb = vec3(0.1f);
+	diff = vec3(0.8f);
+	spec = vec3(1.0f);
+	float inner = cos(radians(12.5f));
+	float outer = cos(radians(17.5f));
+
+	SpotLight spotLight(amb, diff, spec, constant, linear, quadratic, inner, outer);
 
 	while (running)
 	{
@@ -220,40 +260,65 @@ int main(int argc, char** argv)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		shader->SetActive();
 		vec3 camPos = camera->GetPos();
 		vec3 camForward = camera->GetForward();
 		
-		shader->SetVec3("light.position", camPos);
-		shader->SetVec3("light.direction", camForward);
-		shader->SetFloat("light.cutOff", cos(radians(12.5f)));
-		shader->SetFloat("light.outerCutOff", cos(radians(17.5f)));
+		shader->SetActive();
 		shader->SetVec3("viewPos", camPos);
+		shader->SetFloat("material.shininess", 32.0f);
 
-		vec3 lightColor = vec3(1.0f);
+
+		// Directional Light
+		shader->SetVec3("dirLight.direction", dirLight.GetDir().x, dirLight.GetDir().y, dirLight.GetDir().z);
+		shader->SetVec3("dirLight.ambient", dirLight.GetAmb());
+		shader->SetVec3("dirLight.diffuse", dirLight.GetDiff());
+		shader->SetVec3("dirLight.specular", dirLight.GetSpec());
+
+
+		// Point Light 
+		for (int i = 0; i < 4; ++i)
+		{
+			string index = to_string(i);
+			string light = "pointLights[" + index + "]";
+
+			shader->SetVec3(light + ".ambient", pointLights[i].GetAmb());
+			shader->SetVec3(light + ".diffuse", pointLights[i].GetDiff());
+			shader->SetVec3(light + ".specular", pointLights[i].GetSpec());
+			
+			shader->SetVec3(light + ".position", pointLights[i].GetPos());
+
+			shader->SetFloat(light + ".constant", pointLights[i].GetConst());
+			shader->SetFloat(light + ".linear", pointLights[i].GetLinear());
+			shader->SetFloat(light + ".quadratic", pointLights[i].GetQuad());
+
+		}
+		
+		spotLight.SetPos(camPos);
+		spotLight.SetDir(camForward);
+		
+		shader->SetVec3("spotLight.position", camPos);
+		shader->SetVec3("spotLight.direction", camForward);
+		
+		shader->SetVec3("spotLight.ambient", amb);
+		shader->SetVec3("spotLight.diffuse", diff);
+		shader->SetVec3("spotLight.specular", spec);
+
+		shader->SetFloat("spotLight.constant", spotLight.GetConst());
+		shader->SetFloat("spotLight.linear", spotLight.GetLinear());
+		shader->SetFloat("spotLight.quadratic", spotLight.GetQuad());
+
+		shader->SetFloat("spotLight.cutOff", spotLight.GetCutOff());
+		shader->SetFloat("spotLight.outerCutOff", spotLight.GetOuterCutOff());
+
+		//vec3 lightColor = vec3(1.0f);
 		//lightColor.x = sin(currentFrame * 2.0);
 		//lightColor.y = sin(currentFrame * 0.7);
 		//lightColor.z = sin(currentFrame * 1.3);
-
-		// Set light properties
-		vec3 ambientColor = vec3(0.1f);
-		vec3 diffuseColor = vec3(0.8f);
-		vec3 specularColor = vec3(1.0f);
-		shader->SetVec3("light.ambient", ambientColor);
-		shader->SetVec3("light.diffuse", diffuseColor);
-		shader->SetVec3("light.specular", specularColor);
-		shader->SetFloat("light.constant", 1.0f);
-		shader->SetFloat("light.linear", 0.09f);
-		shader->SetFloat("light.quadratic", 0.032f);
 
 		// Set material properties
 		//shader->SetVec3("material.ambient", 1.0f, 0.5f, 0.31f);
 		//shader->SetVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
 		//shader->SetVec3("material.specular", 0.5f, 0.5f, 0.5f);
-		shader->SetFloat("material.shininess", 32.0f);
-
-
-		//printf("CameraPos %f \n", cameraPos.z);
 
 		mat4 p = perspective(radians(camera->GetFov()), 800.0f / 600.0f, 0.1f, 100.0f);
 		mat4 v = camera->MyLookAt();
@@ -285,18 +350,20 @@ int main(int argc, char** argv)
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
-		/*lightShader->SetActive();
+		lightShader->SetActive();
 		lightShader->SetMat4("projection", p);
-		lightShader->SetMat4("view", v);*/
+		lightShader->SetMat4("view", v);
 
-		//m = mat4(1.0f);
-		//m = translate(m, lightPos);
-		//m = scale(m, vec3(0.2f));
-		//lightShader->SetMat4("model", m);
-
-		//// Render a lamp
-		//glBindVertexArray(lightVAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		// Render a lamp
+		glBindVertexArray(lightVAO);
+		for (int i = 0; i < 4; ++i)
+		{
+			m = mat4(1.0f);
+			m = translate(m, lightPositions[i]);
+			m = scale(m, vec3(0.2f));
+			lightShader->SetMat4("model", m);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 
 		SDL_GL_SwapWindow(window);
 	}
@@ -321,6 +388,7 @@ int main(int argc, char** argv)
 	delete texture1;
 	delete texture2;
 	delete texture3;
+	delete[] pointLights;
 
 	return 0;
 }

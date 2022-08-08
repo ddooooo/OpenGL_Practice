@@ -21,7 +21,7 @@ public:
 
 	void SetInt(const string& name, int value) const;
 	void SetFloat(const string& name, float value) const;
-	void SetVec3(const string& name, vec3& vector) const;
+	void SetVec3(const string& name, vec3 vector) const;
 	void SetVec3(const string& name, float x, float y, float z) const;
 	void SetMat4(const string& name, mat4& matrix) const;
 
