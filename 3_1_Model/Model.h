@@ -25,12 +25,10 @@ public:
 
 	vector<Vertex> m_vertices;
 	vector<unsigned int> m_indices;
-	//vector<TextureS> m_textures;
-	vector<Texture> m_textures;
+	vector<TextureS> m_textures;
 
 	vector<Mesh> m_meshes;
-	//vector<TextureS> m_textures_loaded;
-	vector<Texture> m_textures_stored;
+	vector<TextureS> m_textures_loaded;
 
 	string m_directory;
 	bool m_gamma_correction;
@@ -44,7 +42,7 @@ private:
 	void ProcessNode(aiNode* node, const aiScene* scene);
 	
 	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
-	vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName);
+	vector<TextureS> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName);
 	unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 };
 

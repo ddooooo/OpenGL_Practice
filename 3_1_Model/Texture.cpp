@@ -23,6 +23,8 @@ bool Texture::LoadTexture()
 {
 	int nChannels = 0;
 	
+	printf("Load Texture! \n");
+
 	//stbi_set_flip_vertically_on_load(true); // Flip the image upside-down
 	
 	unsigned char* texture = stbi_load(m_path.c_str(), &m_width, &m_height, &nChannels, 0);

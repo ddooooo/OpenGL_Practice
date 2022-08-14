@@ -1,7 +1,7 @@
 #include "Mesh.h"
 #include <iostream>
 using namespace std;
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
+Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<TextureS> textures)
 {
 	//cout << "Mesh Object Created" << endl;
 
@@ -53,7 +53,7 @@ void Mesh::Draw(Shader& shader)
 		glActiveTexture(GL_TEXTURE0 + i);
 
 		string index;
-		string type = m_textures[i].GetType();
+		string type = m_textures[i].type;
 		
 		if (type == "texture_diffuse")
 			index = to_string(diffuse_index++);
@@ -64,11 +64,10 @@ void Mesh::Draw(Shader& shader)
 		else if (type == "texture_height")
 			index = to_string(height_index);
 		
-		cout << (type + index).c_str() << endl;
-		shader.SetInt( (type + index).c_str(), i);
-		m_textures[i].SetActive();
-		//glUniform1i(glGetUniformLocation(shader.GetShaderProgram(), (type + index).c_str()), i);
-		//glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+		//shader.SetInt( (type + index).c_str(), i);
+		//m_textures[i].SetActive();
+		glUniform1i(glGetUniformLocation(shader.GetShaderProgram(), (type + index).c_str()), i);
+		glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
 	}
 	
 

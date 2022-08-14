@@ -119,30 +119,30 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
 	// Load Diffuse from texture
-	vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+	vector<TextureS> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	m_textures.insert(m_textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
 	// Load specular from texture
-	vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+	vector<TextureS> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 	m_textures.insert(m_textures.end(), specularMaps.begin(), specularMaps.end());
 	
 	// Load normal map from texture
-	vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+	vector<TextureS> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 	m_textures.insert(m_textures.end(), normalMaps.begin(), normalMaps.end());
 	
 	// Load height map from texture
-	vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
+	vector<TextureS> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
 	m_textures.insert(m_textures.end(), heightMaps.begin(), heightMaps.end());
 
 	return Mesh(m_vertices, m_indices, m_textures);
 }
 
-vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
+vector<TextureS> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
 {
 	//cout << "Load Material Texture " << typeName << " " << mat->GetTextureCount(type) << endl;
 
-	//vector<TextureS> textures;
-	vector<Texture> textures;
+	vector<TextureS> textures;
+	
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i)
 	{
 		aiString str;
@@ -152,13 +152,13 @@ vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type,
 		//cout << "str: " << str.C_Str() << endl;
 
 		// Check if the texture was loaded before
-		for (unsigned int j = 0; j < m_textures_stored.size(); ++j)
+		for (unsigned int j = 0; j < m_textures_loaded.size(); ++j)
 		{
-			if (strcmp(m_textures_stored[j].GetPath().data(), str.C_Str()) == 0)
+			if (strcmp(m_textures_loaded[j].path.data(), str.C_Str()) == 0)
 			{
 				// If the texture was loaded before, 
 				// just push the loaded texture to the textures container
-				textures.push_back(m_textures_stored[j]);
+				textures.push_back(m_textures_loaded[j]);
 				skip = true;
 				break;
 			}
@@ -166,18 +166,12 @@ vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type,
 
 		if (!skip)
 		{
-			/*TextureS texture;
+			TextureS texture;
 			texture.id = TextureFromFile(str.C_Str(), m_directory);
 			texture.type = typeName;
 			texture.path = str.C_Str();
 			textures.push_back(texture);
-			m_textures_loaded.push_back(texture);*/
-
-			string file_name = string(str.C_Str());
-			string path = m_directory + '/' + file_name;
-			Texture texture(path, typeName);
-			texture.LoadTexture();
-			m_textures_stored.push_back(texture);
+			m_textures_loaded.push_back(texture);
 		}
 	}
 	

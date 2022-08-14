@@ -59,8 +59,6 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 
 	printf("%s \n", glGetString(GL_VERSION));
 
-	//stbi_set_flip_vertically_on_load(true);
-
 	m_camera = new Camera();
 
 	return true;

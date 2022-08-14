@@ -36,9 +36,9 @@ class Mesh
 public:
 	vector<Vertex> m_vertices;
 	vector<unsigned int> m_indices;
-	vector<Texture> m_textures;
+	vector<TextureS> m_textures;
 
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indices = {}, vector<Texture> textures = {});
+	Mesh(vector<Vertex> vertices, vector<unsigned int> indices = {}, vector<TextureS> textures = {});
 
 	// Render the mesh
 	void Draw();
