@@ -89,6 +89,8 @@ void Renderer::Draw()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	SetupLight();
+
 	mat4 p = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
 	mat4 v = m_camera->MyLookAt();
 	mat4 m = mat4(1.0f);
@@ -96,14 +98,12 @@ void Renderer::Draw()
 	m = translate(m, vec3(0.0f, 0.0f, 0.0f));
 	m = scale(m, vec3(0.5f, 0.5f, 0.5f));
 
-
 	m_model_shader->SetActive();
 	m_model_shader->SetMat4("projection", p);
 	m_model_shader->SetMat4("view", v);
 	m_model_shader->SetMat4("model", m);
 
 	m_model->Draw(*m_model_shader);
-
 
 	m_light_shader->SetActive();
 	m_light_shader->SetMat4("projection", p);
@@ -119,17 +119,15 @@ void Renderer::Draw()
 		m_light_mesh->Draw();
 	}
 
-	
 	SDL_GL_SwapWindow(m_window);
 
 }
 
-bool Renderer::LoadModel()
+bool Renderer::LoadModel(const string& path)
 {
-	string model_path = "Models/Big_Man/BigMan.obj";
 	m_model = new Model();
 
-	return m_model->LoadModel(model_path);
+	return m_model->LoadModel(path);
 }
 
 bool Renderer::LoadShader()
@@ -160,7 +158,6 @@ bool Renderer::LoadShader()
 
 	return true;
 }
-
 
 bool Renderer::LoadVertices()
 {
@@ -233,8 +230,6 @@ bool Renderer::LoadVertices()
 
 	}
 
-	//cout << "Set up Mesh! vertices" << endl;
-
 	m_light_mesh = new Mesh(m_light_vertices, m_light_indices);
 
 	m_light_mesh->SetupMesh();
@@ -242,6 +237,19 @@ bool Renderer::LoadVertices()
 	return true;
 }
 
+void Renderer::SetupLight()
+{
+	vec3 cam_pos = m_camera->GetPos();
+	vec3 cam_forward = m_camera->GetForward();
+
+	m_model_shader->SetActive();
+	m_model_shader->SetVec3("viewPos", cam_pos);
+
+	m_model_shader->SetVec3("dirLight.direction", m_dir);
+	m_model_shader->SetVec3("dirLight.ambient", m_amb);
+	m_model_shader->SetVec3("dirLight.diffuse", m_diff);
+	m_model_shader->SetVec3("dirLight.specular", m_spec);
+}
 
 void Renderer::UnLoad()
 {

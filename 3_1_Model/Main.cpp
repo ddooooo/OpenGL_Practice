@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
 	renderer->LoadVertices();
 
-	renderer->LoadModel();
+	renderer->LoadModel("Models/Earth.obj");
 
 	renderer->LoadShader();
 

@@ -28,10 +28,11 @@ public:
 
 	void Draw();
 
-	bool LoadModel();
+	bool LoadModel(const string& path);
 	bool LoadShader();
 	bool LoadVertices();
-	bool LoadIndices();
+
+	void SetupLight();
 
 	void UnLoad();
 
@@ -72,6 +73,12 @@ private:
 	Shader* m_light_shader;
 
 	Mesh* m_light_mesh;
+
+	// Lights
+	vec3 m_amb = { 0.5f, 0.5f, 0.5f };
+	vec3 m_diff = { 1.0f, 1.0f, 1.0f };
+	vec3 m_spec = { 0.5f, 0.5f, 0.5f };
+	vec3 m_dir = { -0.2f, -1.0f, -0.3f };
 
 	vector<vec3> m_light_positions = {
 		vec3(0.7f,  0.2f,  2.0f),

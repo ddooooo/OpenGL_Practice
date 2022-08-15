@@ -66,20 +66,24 @@ void Mesh::Draw(Shader& shader)
 		
 		//shader.SetInt( (type + index).c_str(), i);
 		//m_textures[i].SetActive();
-		glUniform1i(glGetUniformLocation(shader.GetShaderProgram(), (type + index).c_str()), i);
+		if (debug)
+		{
+			cout << "material." + type + index << endl;
+			debug = false;
+		}
+		glUniform1i(glGetUniformLocation(shader.GetShaderProgram(), ("material." + type + index).c_str()), i);
 		glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
 	}
 	
-
 	// Draw mesh(triangle) with vertices
 	glBindVertexArray(m_VAO);
-	//glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, nullptr);
+	
 	// Set back to default vertex array
-	//glBindVertexArray(0);
+	glBindVertexArray(0);
 
 	// Set everything back to default texture
-	//glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 void Mesh::SetupMesh()
