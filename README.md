@@ -1,15 +1,15 @@
 # OpenGL_Projects
 
-Learn how to use OpenGL.
+## Learn how to use OpenGL.
 
-Reference: 
+### Reference: 
 
 https://learnopengl.com 
 
 Game Programming in C++ by Sanjay Madhav (https://www.amazon.com/Game-Programming-Creating-Games-Design/dp/0134597206)
 
 
-3_1_Model:
+### 3_1_Model:
 
 Build a project to load obj file, which is exported from blender.
 
