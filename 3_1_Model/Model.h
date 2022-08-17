@@ -25,13 +25,18 @@ public:
 
 	vector<Vertex> m_vertices;
 	vector<unsigned int> m_indices;
+	
+	Material m_material;
 	vector<TextureS> m_textures;
 
 	vector<Mesh> m_meshes;
 	vector<TextureS> m_textures_loaded;
+	vector<Material> m_materials_loaded;
 
 	string m_directory;
 	bool m_gamma_correction;
+
+	bool debug = true;
 
 	Model(bool gamma = false);
 	void Draw(Shader& shader);
@@ -42,8 +47,14 @@ private:
 	void ProcessNode(aiNode* node, const aiScene* scene);
 	
 	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
+
+	// Object material handling functions
+	Material LoadMaterial(aiMaterial* mat);
+	
+	// Texture handling functions
 	vector<TextureS> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName);
 	unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
+
 };
 
 #endif

@@ -25,7 +25,7 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
 	// Set a color buffer with 8 bits for each channel
-	/*SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
@@ -35,7 +35,7 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// Hardware Acceleration
-	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);*/
+	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
 	if (!m_window)
 	{
@@ -123,9 +123,12 @@ void Renderer::Draw()
 
 }
 
-bool Renderer::LoadModel(const string& path)
+bool Renderer::LoadModel(const string& path, bool flip)
 {
 	m_model = new Model();
+
+	stbi_set_flip_vertically_on_load(flip);
+
 
 	return m_model->LoadModel(path);
 }

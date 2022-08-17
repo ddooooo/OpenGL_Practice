@@ -1,13 +1,15 @@
 #include "Mesh.h"
 #include <iostream>
 using namespace std;
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<TextureS> textures)
+Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<TextureS> textures, Material material)
 {
 	//cout << "Mesh Object Created" << endl;
 
-	this->m_vertices = vertices;
-	this->m_indices = indices;
-	this->m_textures = textures;
+	m_vertices = vertices;
+	m_indices = indices;
+	m_textures = textures;
+
+	m_material = material;
 }
 
 //void Mesh::ProcessMesh()
@@ -39,12 +41,37 @@ void Mesh::Draw(Shader& shader)
 	unsigned int normal_index = 1;
 	unsigned int height_index = 1;
 	
-	/*if (debug)
+	if (debug)
 	{
-		cout << "Draw mesh! model" << endl;
-		cout << m_textures.size() << endl;
+		cout << "Draw mesh! with " << m_indices.size() << " and " << m_vertices.size() << " and " << m_textures.size() << endl;
+		
+	}
+
+	//glUniform1i(glGetUniformLocation(shader.GetShaderProgram))
+
+	shader.SetActive();
+
+	if (debug)
+	{
+		cout << "Set mat.ambient " << m_material.ambient.x <<  endl;
+	}
+
+	shader.SetVec3("mat.ambient", m_material.ambient);
+
+	if (debug)
+	{
+		cout << "Set mat.diffuse " << m_material.diffuse.x << endl;
+	}
+
+	shader.SetVec3("mat.diffuse", m_material.diffuse);
+
+	if (debug)
+	{
+		cout << "Set mat.specular " << m_material.specular.x << endl;
 		debug = false;
-	}*/
+	}
+
+	shader.SetVec3("mat.specular", m_material.specular);
 
 	// Set texture before draw a mesh
 	for (int i = 0; i < m_textures.size(); ++i)
@@ -68,10 +95,10 @@ void Mesh::Draw(Shader& shader)
 		//m_textures[i].SetActive();
 		if (debug)
 		{
-			cout << "material." + type + index << endl;
+			cout << "texture." + type + index << endl;
 			debug = false;
 		}
-		glUniform1i(glGetUniformLocation(shader.GetShaderProgram(), ("material." + type + index).c_str()), i);
+		glUniform1i(glGetUniformLocation(shader.GetShaderProgram(), ("tex." + type + index).c_str()), i);
 		glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
 	}
 	

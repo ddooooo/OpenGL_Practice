@@ -12,6 +12,12 @@ Model::Model(bool gamma) : m_gamma_correction(gamma)
 
 void Model::Draw(Shader& shader)
 {
+	if (debug)
+	{
+		cout << "The size of mesh is " << m_meshes.size() << endl;
+		debug = false;
+	}
+
 	for (unsigned int i = 0; i < m_meshes.size(); ++i)
 		m_meshes[i].Draw(shader);
 }
@@ -60,7 +66,13 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 
 Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
-	//cout << "Process Mesh!" << endl;
+	cout << "Process Mesh!" << endl;
+
+	// Rest the vertices and indices
+
+	m_vertices.clear();
+	m_indices.clear();
+
 
 	// Data for mesh
 
@@ -117,6 +129,8 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
 	// Load materials
 	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+	
+	m_material = LoadMaterial(material);
 
 	// Load Diffuse from texture
 	vector<TextureS> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
@@ -134,7 +148,74 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	vector<TextureS> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
 	m_textures.insert(m_textures.end(), heightMaps.begin(), heightMaps.end());
 
-	return Mesh(m_vertices, m_indices, m_textures);
+	return Mesh(m_vertices, m_indices, m_textures, m_material);
+}
+
+Material Model::LoadMaterial(aiMaterial* mat)
+{
+	cout << "Load Material!" << endl;
+
+	aiString str;
+	Material material;
+
+	if (AI_SUCCESS != mat->Get(AI_MATKEY_NAME, str))
+	{
+		// if material does not have any name
+		// just return empty vector...
+		cerr << "Material does not have any name..." << endl;
+		return material;
+	}
+
+	cout << "Material ready to load" << endl;
+	//bool skip = false;
+
+	//for (unsigned int i = 0; i < m_materials_loaded.size(); ++i)
+	//{
+	//	if (strcmp(m_materials_loaded[i].type.data(), str.C_Str()) == 0)
+	//	{
+	//		// if a material was loaded before
+	//		// just push the material to 'materials' vector container
+	//		materials.push_back(m_materials_loaded[i]);
+	//		skip = true;
+	//		break;
+	//	}
+	//}
+
+	aiColor3D color(0.0f, 0.0f, 0.0f);
+
+
+
+	if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_AMBIENT, color))
+	{
+		material.ambient = { color.r, color.g, color.b };
+		cout << "Set ambient " << material.ambient.x << endl;
+	}
+	else
+	{
+		material.ambient = { 0.0f, 0.0f, 0.0f };
+	}
+
+	if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE, color))
+	{
+		material.diffuse = { color.r, color.g, color.b };
+		cout << "Set Diffuse" << material.diffuse.x << endl;
+	}
+	else
+	{
+		material.diffuse = { 0.0f, 0.0f, 0.0f };
+	}
+
+	if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_SPECULAR, color))
+	{
+		material.specular = { color.r, color.g, color.b };
+		cout << "Set specular" << material.specular.x << endl;
+	}
+	else
+	{
+		material.specular = { 0.0f, 0.0f, 0.0f };
+	}
+
+	return material;
 }
 
 vector<TextureS> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)

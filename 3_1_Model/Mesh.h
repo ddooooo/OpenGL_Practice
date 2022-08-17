@@ -31,6 +31,14 @@ struct TextureS
 	string path;
 };
 
+struct Material
+{
+	vec3 ambient = {0.0f, 0.0f, 0.0f};
+	vec3 diffuse = { 0.0f, 0.0f, 0.0f };
+	vec3 specular = { 0.0f, 0.0f, 0.0f };
+	string type;
+};
+
 class Mesh
 {
 public:
@@ -38,7 +46,9 @@ public:
 	vector<unsigned int> m_indices;
 	vector<TextureS> m_textures;
 
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indices = {}, vector<TextureS> textures = {});
+	Material m_material;
+
+	Mesh(vector<Vertex> vertices, vector<unsigned int> indices = {}, vector<TextureS> textures = {}, Material material = {});
 
 	// Render the mesh
 	void Draw();

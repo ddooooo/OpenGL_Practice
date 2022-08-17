@@ -28,7 +28,7 @@ public:
 
 	void Draw();
 
-	bool LoadModel(const string& path);
+	bool LoadModel(const string& path, bool flip);
 	bool LoadShader();
 	bool LoadVertices();
 

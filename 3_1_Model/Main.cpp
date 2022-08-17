@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
 	renderer->LoadVertices();
 
-	renderer->LoadModel("Models/Earth.obj");
+	renderer->LoadModel("Models/Cube/Cube_Texture.obj", false);
 
 	renderer->LoadShader();
 
