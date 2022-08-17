@@ -17,5 +17,5 @@ A character model is 'Link' (reference: https://www.youtube.com/c/TheObservatory
 
 Screen Capture during execution of 3_1_Model project:
 
-![Screenshot](ddooooo.github.com/OpenGL_Projects/Screen_Capture/Link.png?raw=true)
+![Link](https://ddooooo.github.com/OpenGL_Projects/Screen_Capture/Link.png?raw=true)
 
