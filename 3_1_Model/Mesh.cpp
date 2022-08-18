@@ -53,22 +53,22 @@ void Mesh::Draw(Shader& shader)
 
 	if (debug)
 	{
-		cout << "Set mat.ambient " << m_material.ambient.x <<  endl;
+		//cout << "Set mat.ambient " << m_material.ambient.x <<  endl;
 	}
 
 	shader.SetVec3("mat.ambient", m_material.ambient);
 
 	if (debug)
 	{
-		cout << "Set mat.diffuse " << m_material.diffuse.x << endl;
+		//cout << "Set mat.diffuse " << m_material.diffuse.x << endl;
 	}
 
 	shader.SetVec3("mat.diffuse", m_material.diffuse);
 
 	if (debug)
 	{
-		cout << "Set mat.specular " << m_material.specular.x << endl;
-		debug = false;
+		//cout << "Set mat.specular " << m_material.specular.x << endl;
+		//debug = false;
 	}
 
 	shader.SetVec3("mat.specular", m_material.specular);
@@ -96,12 +96,19 @@ void Mesh::Draw(Shader& shader)
 		if (debug)
 		{
 			cout << "texture." + type + index << endl;
-			debug = false;
+			cout << "Texture from " << m_textures[i].path << endl;
 		}
 		glUniform1i(glGetUniformLocation(shader.GetShaderProgram(), ("tex." + type + index).c_str()), i);
 		glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
 	}
 	
+	if (debug)
+	{
+		cout << "Ready to draw mesh" << endl;
+		debug = false;
+
+	}
+
 	// Draw mesh(triangle) with vertices
 	glBindVertexArray(m_VAO);
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, nullptr);

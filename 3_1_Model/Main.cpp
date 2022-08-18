@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
 	renderer->LoadVertices();
 
-	renderer->LoadModel("Models/Link/Link.obj", false);
+	renderer->LoadModel("Models/Link/Link_Final.obj", false);
 
 	renderer->LoadShader();
 

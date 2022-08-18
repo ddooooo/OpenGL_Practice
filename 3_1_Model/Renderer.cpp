@@ -95,7 +95,7 @@ void Renderer::Draw()
 	mat4 v = m_camera->MyLookAt();
 	mat4 m = mat4(1.0f);
 
-	m = translate(m, vec3(0.0f, 0.0f, 0.0f));
+	//m = translate(m, vec3(0.0f, 0.0f, 0.0f));
 	m = scale(m, vec3(0.5f, 0.5f, 0.5f));
 
 	m_model_shader->SetActive();

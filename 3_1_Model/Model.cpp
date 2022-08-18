@@ -72,7 +72,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
 	m_vertices.clear();
 	m_indices.clear();
-
+	m_textures.clear();
 
 	// Data for mesh
 
@@ -91,8 +91,12 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		temp.z = mesh->mVertices[i].z;
 		// Set position of each vertex
 		vertex.position = temp;
-		/*cout << "Vertex" << i + 1 << " has " << vertex.position.x << " " << vertex.position.y <<
-			" " << vertex.position.z << endl;*/
+
+		if (vertex.position == vec3(0.0f, 0.0f, 0.0f))
+		{
+			cout << "Origin!" << endl;
+		}
+
 		//  Set normal of each vertex
 		if (mesh->HasNormals())
 		{
@@ -148,12 +152,17 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	vector<TextureS> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
 	m_textures.insert(m_textures.end(), heightMaps.begin(), heightMaps.end());
 
+	for (int i = 0; i < m_textures.size(); ++i)
+	{
+		cout << m_textures[i].path << " ";
+	}
+	cout << endl;
 	return Mesh(m_vertices, m_indices, m_textures, m_material);
 }
 
 Material Model::LoadMaterial(aiMaterial* mat)
 {
-	cout << "Load Material!" << endl;
+	//cout << "Load Material!" << endl;
 
 	aiString str;
 	Material material;
@@ -166,7 +175,7 @@ Material Model::LoadMaterial(aiMaterial* mat)
 		return material;
 	}
 
-	cout << "Material ready to load" << endl;
+	//cout << "Material ready to load" << endl;
 	//bool skip = false;
 
 	//for (unsigned int i = 0; i < m_materials_loaded.size(); ++i)
@@ -188,7 +197,7 @@ Material Model::LoadMaterial(aiMaterial* mat)
 	if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_AMBIENT, color))
 	{
 		material.ambient = { color.r, color.g, color.b };
-		cout << "Set ambient " << material.ambient.x << endl;
+		//cout << "Set ambient " << material.ambient.x << endl;
 	}
 	else
 	{
@@ -198,7 +207,7 @@ Material Model::LoadMaterial(aiMaterial* mat)
 	if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE, color))
 	{
 		material.diffuse = { color.r, color.g, color.b };
-		cout << "Set Diffuse" << material.diffuse.x << endl;
+		//cout << "Set Diffuse" << material.diffuse.x << endl;
 	}
 	else
 	{
@@ -208,7 +217,7 @@ Material Model::LoadMaterial(aiMaterial* mat)
 	if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_SPECULAR, color))
 	{
 		material.specular = { color.r, color.g, color.b };
-		cout << "Set specular" << material.specular.x << endl;
+		//cout << "Set specular" << material.specular.x << endl;
 	}
 	else
 	{
@@ -261,8 +270,10 @@ vector<TextureS> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type
 
 unsigned int Model::TextureFromFile(const char* path, const string& directory, bool gamma)
 {
+
 	string fileName = string(path);
 	fileName = directory + '/' + fileName;
+	cout << "Load Texture! from " << fileName << endl;
 
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
