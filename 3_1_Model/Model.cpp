@@ -162,7 +162,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
 Material Model::LoadMaterial(aiMaterial* mat)
 {
-	//cout << "Load Material!" << endl;
+	cout << "Load Material!" << endl;
 
 	aiString str;
 	Material material;
@@ -222,6 +222,15 @@ Material Model::LoadMaterial(aiMaterial* mat)
 	else
 	{
 		material.specular = { 0.0f, 0.0f, 0.0f };
+	}
+
+	float metal_factor = 0.0;
+
+	if (AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS, metal_factor))
+	{
+		material.shininess = metal_factor;
+		cout << "Metallic Factor is " << material.shininess << endl;
+		
 	}
 
 	return material;

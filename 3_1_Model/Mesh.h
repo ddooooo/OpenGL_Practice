@@ -37,6 +37,7 @@ struct Material
 	vec3 diffuse = { 0.0f, 0.0f, 0.0f };
 	vec3 specular = { 0.0f, 0.0f, 0.0f };
 	string type;
+	float shininess = 0.0f;
 };
 
 class Mesh

@@ -6,11 +6,14 @@ struct Material
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
+
+	float shininess;
 };
 
 struct Texture
 {
 	sampler2D texture_diffuse1;
+	sampler2D texture_reflection1;
 };
 
 struct DirLight
@@ -77,9 +80,9 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 	}
 
 	// Specular
-	// vec3 reflectDir = 2 * dot(normal, lightDir) * normal - lightDir;
-	// float specFactor = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);	
-	// vec3 specular = light.specular * specFactor * vec3(texture(material.specular, texCoord));
+	vec3 reflectDir = 2 * dot(normal, lightDir) * normal - lightDir;
+	float specFactor = pow(max(dot(viewDir, reflectDir), 0.0), mat.shininess);	
+	vec3 specular = light.specular * specFactor * mat.specular;
 
-	return (ambient + diffuse);
+	return (ambient + diffuse + specular);
 }

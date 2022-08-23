@@ -10,7 +10,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Cloth.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Cloth.png
 
 newmtl Dark_Green
 Ns 250.000000
@@ -21,18 +21,18 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Cloth.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Cloth.png
 
 newmtl Eye
 Ns 250.000000
-Ka 0.000000 0.000000 0.000000
+Ka 1.000000 1.000000 1.000000
 Kd 0.000000 0.000000 0.000000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Skin_Last.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Skin_Last.png
 
 newmtl Hair
 Ns 250.000000
@@ -43,7 +43,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Hair_Last.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Hair_Last.png
 
 newmtl Leg
 Ns 250.000000
@@ -54,7 +54,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Cloth.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Cloth.png
 
 newmtl Light_Green
 Ns 250.000000
@@ -65,7 +65,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Cloth.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Cloth.png
 
 newmtl Shield_Blue
 Ns 250.000000
@@ -75,8 +75,9 @@ Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
-illum 3
-map_Kd Link_Shield.png
+illum 2
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Shield.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Shield_Emission.png
 
 newmtl Shield_Dark_Grey
 Ns 429.025002
@@ -86,19 +87,21 @@ Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
-illum 3
-map_Kd Link_Shield.png
+illum 2
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Shield.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Shield_Emission.png
 
 newmtl Shield_Light_Grey
-Ns 429.025002
+Ns 583.140499
 Ka 1.000000 1.000000 1.000000
 Kd 0.577580 0.637597 0.686685
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
-illum 3
-map_Kd Link_Shield.png
+illum 2
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Shield.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Shield_Emission.png
 
 newmtl Shield_Red
 Ns 250.000000
@@ -109,7 +112,8 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Shield.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Shield.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Shield_Emission.png
 
 newmtl Shield_White
 Ns 250.000000
@@ -120,7 +124,8 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Shield.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Shield.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Shield_Emission.png
 
 newmtl Shield_Yellow
 Ns 250.000000
@@ -131,7 +136,8 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Shield.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Shield.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Shield_Emission.png
 
 newmtl Shoe/Belt
 Ns 250.000000
@@ -142,7 +148,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Cloth.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Cloth.png
 
 newmtl Shoe_Bottom
 Ns 250.000000
@@ -153,7 +159,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Cloth.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Cloth.png
 
 newmtl Skin
 Ns 250.000000
@@ -164,7 +170,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Skin_Last.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Skin_Last.png
 
 newmtl Sleeves
 Ns 250.000000
@@ -175,7 +181,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Cloth.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Cloth.png
 
 newmtl Sword_Handle_Lower
 Ns 250.000000
@@ -186,7 +192,8 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Sword.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Sword.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Sword_Emission.png
 
 newmtl Sword_Handle_Upper
 Ns 250.000000
@@ -197,7 +204,8 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd Link_Sword.png
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Sword.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Sword_Emission.png
 
 newmtl Sword_Lower
 Ns 429.025002
@@ -207,8 +215,9 @@ Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
-illum 3
-map_Kd Link_Sword.png
+illum 2
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Sword.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Sword_Emission.png
 
 newmtl Sword_Upper
 Ns 429.025002
@@ -218,5 +227,6 @@ Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
-illum 3
-map_Kd Link_Sword.png
+illum 2
+map_Kd E:\\Game Development\\Chess_Design\\References\\Link_Sword.png
+refl E:\\Game Development\\Chess_Design\\References\\Link_Sword_Emission.png

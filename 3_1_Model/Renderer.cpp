@@ -87,7 +87,9 @@ void Renderer::Draw()
 	}
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Need to clar color and depth buffer for every frame
+	// color and buffer value is updated for every frame
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
 	SetupLight();
 

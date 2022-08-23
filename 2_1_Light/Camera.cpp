@@ -46,8 +46,8 @@ void Camera::ProcessInput()
 
 void Camera::ProcessMouseMotion(SDL_Event mouseEvent)
 {
-	SDL_ShowCursor(SDL_FALSE);
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_ShowCursor(SDL_TRUE);
+	SDL_SetRelativeMouseMode(SDL_FALSE);
 
 	int x, y;
 

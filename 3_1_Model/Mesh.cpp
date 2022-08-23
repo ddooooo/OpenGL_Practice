@@ -72,7 +72,7 @@ void Mesh::Draw(Shader& shader)
 	}
 
 	shader.SetVec3("mat.specular", m_material.specular);
-
+	shader.SetFloat("mat.shininess", m_material.shininess);
 	// Set texture before draw a mesh
 	for (int i = 0; i < m_textures.size(); ++i)
 	{

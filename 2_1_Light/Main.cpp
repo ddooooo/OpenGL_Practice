@@ -33,6 +33,7 @@ int main(int argc, char** argv)
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 
@@ -48,6 +49,9 @@ int main(int argc, char** argv)
 	glGetError();
 
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_STENCIL_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	float vertices[] = {
 		// positions          // normals           // texture coords
@@ -126,6 +130,13 @@ int main(int argc, char** argv)
 	{
 		printf("Failed to load shader files! \n");
 	}
+
+	Shader outline;
+	
+	string outlineVert = "Shaders/1_Stencil.vert";
+	string outlineFrag = "Shaders/1_Stencil.frag";
+	outline.LoadShaderFile(outlineVert, outlineFrag);
+
 
 	Shader* lightShader = new Shader();
 
@@ -257,9 +268,10 @@ int main(int argc, char** argv)
 				camera->ProcessMouseMotion(event);
 			}
 		}
+		glStencilMask(0xFF);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		vec3 camPos = camera->GetPos();
 		vec3 camForward = camera->GetForward();
@@ -341,9 +353,12 @@ int main(int argc, char** argv)
 
 		//glBindTexture(GL_TEXTURE_2D, texture->GetTextureID());
 
+		glStencilFunc(GL_ALWAYS, 1, 0xFF); // Stencil test, fill stencil buffer with 1
+		glStencilMask(0xFF); // Enable modifying stencil buffer
+
 		// Render a cube
 		glBindVertexArray(cubeVAO);
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 1; i++)
 		{
 			m = mat4(1.0f);
 			m = translate(m, cubePositions[i]);
@@ -351,20 +366,40 @@ int main(int argc, char** argv)
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
-		lightShader->SetActive();
-		lightShader->SetMat4("projection", p);
-		lightShader->SetMat4("view", v);
-
-		// Render a lamp
-		glBindVertexArray(lightVAO);
-		for (int i = 0; i < 4; ++i)
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // A pixel that is not equal to 1 passes a stencil test
+		glStencilMask(0x00); // Disable modifying stencil buffer
+		glDisable(GL_DEPTH_TEST);
+		 
+		outline.SetActive();
+		outline.SetMat4("projection", p);
+		outline.SetMat4("view", v);
+		for (int i = 0; i < 1; i++)
 		{
 			m = mat4(1.0f);
-			m = translate(m, lightPositions[i]);
-			m = scale(m, vec3(0.2f));
-			lightShader->SetMat4("model", m);
+			m = translate(m, cubePositions[i]);
+			m = scale(m, vec3(1.1f, 1.1f, 1.1f));
+			outline.SetMat4("model", m);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+
+		glStencilMask(0xFF);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF); // fill stencil buffer with 0
+		glEnable(GL_DEPTH_TEST);
+
+		//lightShader->SetActive();
+		//lightShader->SetMat4("projection", p);
+		//lightShader->SetMat4("view", v);
+
+		//// Render a lamp
+		//glBindVertexArray(lightVAO);
+		//for (int i = 0; i < 4; ++i)
+		//{
+		//	m = mat4(1.0f);
+		//	m = translate(m, lightPositions[i]);
+		//	m = scale(m, vec3(0.2f));
+		//	lightShader->SetMat4("model", m);
+		//	glDrawArrays(GL_TRIANGLES, 0, 36);
+		//}
 
 		SDL_GL_SwapWindow(window);
 	}
