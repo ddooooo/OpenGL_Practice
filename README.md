@@ -13,7 +13,7 @@ Game Programming in C++ by Sanjay Madhav (https://www.amazon.com/Game-Programmin
 
 Build a project to load obj file by using Assimp Library, which is exported from blender.
 
-A character model is 'Link' (reference: https://www.youtube.com/c/TheObservatoryShow)
+A character is 'Link' (reference: https://www.youtube.com/c/TheObservatoryShow)
 
 Screen Capture during execution of 3_1_Model project:
 
