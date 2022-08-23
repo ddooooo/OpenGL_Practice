@@ -57,15 +57,17 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 
 	glGetError();
 
-	glEnable(GL_DEPTH_TEST); // Enable depth buffer
-	glEnable(GL_STENCIL_TEST); // Enable stencil buffer
+	// Enable depth buffer
+	glEnable(GL_DEPTH_TEST);
+	// Enable stencil buffer
+	glEnable(GL_STENCIL_TEST); 
 	// If both depth and stencil test pass, then use the result of the stencil test
 	// Replace with the masked fragment value
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); 
-
+	// Enable blending buffer
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+	
 	printf("%s \n", glGetString(GL_VERSION));
 
 	m_camera = new Camera();
@@ -160,6 +162,9 @@ void Renderer::Draw()
 	//Enable depth test
 	glEnable(GL_DEPTH_TEST);
 
+	// Enable cull buffer
+	glEnable(GL_CULL_FACE);
+
 	// Draw Lights
 	m_light_shader->SetActive();
 	m_light_shader->SetMat4("projection", p);
@@ -173,6 +178,8 @@ void Renderer::Draw()
 		m_light_shader->SetMat4("model", m);
 		m_primitives[0].Draw();
 	}
+
+	glDisable(GL_CULL_FACE);
 
 	// Draw grass
 	m_grass_shader->SetActive();
@@ -197,7 +204,7 @@ void Renderer::Draw()
 	int index = 1;
 
 	glBindTexture(GL_TEXTURE_2D, m_window_texture->GetTextureID());
-	cout << "size of sorted: " << m_sorted.size() << endl;
+	//cout << "size of sorted: " << m_sorted.size() << endl;
 	auto it = m_sorted.rbegin();
 	for (it; it != m_sorted.rend(); ++it)
 	{
