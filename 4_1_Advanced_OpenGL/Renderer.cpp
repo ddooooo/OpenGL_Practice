@@ -29,15 +29,16 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	
-	m_window = SDL_CreateWindow("Model Loading", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		static_cast<int>(m_width), static_cast<int>(m_height), SDL_WINDOW_OPENGL);
-
-
 	// Set double buffering
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// Hardware Acceleration
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+
+	m_window = SDL_CreateWindow("Model Loading", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		static_cast<int>(m_width), static_cast<int>(m_height), SDL_WINDOW_OPENGL);
+
+
 
 	if (!m_window)
 	{
@@ -69,6 +70,71 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	printf("%s \n", glGetString(GL_VERSION));
+
+	if (!LoadPrimitive(Shape::CUBE))
+	{
+		cout << "Failed to load cube!" << endl;
+		return false;
+	}
+
+	if (!LoadPrimitive(Shape::BOX))
+	{
+		cout << "Failed to load box!" << endl;
+		return false;
+	}
+
+	if (!LoadModel("Models/Link/Link_Final.obj", false))
+	{
+		cout << "Failed to load model" << endl;
+		return false;
+	}
+	
+	// Load quad
+	glGenVertexArrays(1, &m_quad_VAO);
+	glGenBuffers(1, &m_quad_VBO);
+	glBindVertexArray(m_quad_VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_quad_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(m_quad_vertices), &m_quad_vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2*sizeof(float)));
+
+	if (!LoadShader())
+	{
+		cout << "Failed to load shaders" << endl;
+		return false;
+	}
+
+	// Create a framebuffer
+	glGenFramebuffers(1, &m_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+
+	// Create a color attachment texture
+	glGenTextures(1, &m_framebuffer_texture);
+	glBindTexture(GL_TEXTURE_2D, m_framebuffer_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_framebuffer_texture, 0);
+
+	// Create a renderbuffer object for depth and stencil attachment
+	glGenRenderbuffers(1, &m_RBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
+
+	// Check framebuffer is complete 
+	auto check = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if ( check != GL_FRAMEBUFFER_COMPLETE)
+	{
+		cout << "Framebuffer error: " << check << endl;
+		return false;
+	}
+	// Back to default framebuffer
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	m_camera = new Camera();
 
@@ -105,13 +171,16 @@ void Renderer::Draw()
 
 	}
 
-	SortPosition();
-
+	// bind to framebuffer that we created and draw a scene
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClearStencil(0);
 	// Need to clear color, depth, and stencil buffer for every frame
 	// color, depth, and stencil are updated for every frame
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); 
+	glEnable(GL_DEPTH_TEST);
+
+	SortPosition();
 
 	SetupLight();
 
@@ -201,10 +270,10 @@ void Renderer::Draw()
 	m_window_shader->SetMat4("projection", p);
 	m_window_shader->SetMat4("view", v);
 
-	int index = 1;
 
 	glBindTexture(GL_TEXTURE_2D, m_window_texture->GetTextureID());
 	//cout << "size of sorted: " << m_sorted.size() << endl;
+	//int index = 1;
 	auto it = m_sorted.rbegin();
 	for (it; it != m_sorted.rend(); ++it)
 	{
@@ -213,10 +282,21 @@ void Renderer::Draw()
 		//cout << "Position" << index << ": " << it->second.x << " " << it->second.y << " " << it->second.z << endl;
 		m_window_shader->SetMat4("model", m);
 		m_primitives[1].Draw();
-		index++;
+		//index++;
 	}
 
-	index = 1;
+	// Bind to default framebuffer and render a quad
+	// glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &m_default_FBO);
+	// glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_default_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDisable(GL_DEPTH_TEST);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	m_screen_shader->SetActive();
+	glBindVertexArray(m_quad_VAO);
+	glBindTexture(GL_TEXTURE_2D, m_framebuffer_texture);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	SDL_GL_SwapWindow(m_window);
 }
@@ -245,17 +325,6 @@ bool Renderer::LoadShader()
 		return false;
 	}
 
-	m_outline_shader = new Shader();
-
-	vert_path = "Shaders/1_Stencil.vert";
-	frag_path = "Shaders/1_Stencil.frag";
-
-	if (!m_outline_shader->LoadShaderFile(vert_path, frag_path))
-	{
-		printf("Failed to load outline shader files! \n");
-		return false;
-	}
-
 	m_light_shader = new Shader();
 
 	vert_path = "Shaders/1_LightColor.vert";
@@ -267,10 +336,21 @@ bool Renderer::LoadShader()
 		return false;
 	}
 
+	m_outline_shader = new Shader();
+
+	vert_path = "Shaders/2_Stencil.vert";
+	frag_path = "Shaders/2_Stencil.frag";
+
+	if (!m_outline_shader->LoadShaderFile(vert_path, frag_path))
+	{
+		printf("Failed to load outline shader files! \n");
+		return false;
+	}
+
 	m_grass_shader = new Shader();
 
-	vert_path = "Shaders/1_Grass.vert";
-	frag_path = "Shaders/1_Grass.frag";
+	vert_path = "Shaders/3_Grass.vert";
+	frag_path = "Shaders/3_Grass.frag";
 
 	if (!m_grass_shader->LoadShaderFile(vert_path, frag_path))
 	{
@@ -285,11 +365,10 @@ bool Renderer::LoadShader()
 	m_grass_shader->SetActive();
 	m_grass_shader->SetInt("texture1", 0);
 
-
 	m_window_shader = new Shader();
 
-	vert_path = "Shaders/1_Window.vert";
-	frag_path = "Shaders/1_Window.frag";
+	vert_path = "Shaders/4_Window.vert";
+	frag_path = "Shaders/4_Window.frag";
 
 	if (!m_window_shader->LoadShaderFile(vert_path, frag_path))
 	{
@@ -304,6 +383,18 @@ bool Renderer::LoadShader()
 	m_window_shader->SetActive();
 	m_window_shader->SetInt("tetxture1", 0);
 
+	m_screen_shader = new Shader();
+	vert_path = "Shaders/5_Screen.vert";
+	frag_path = "Shaders/5_Screen.frag";
+
+	if (!m_screen_shader->LoadShaderFile(vert_path, frag_path))
+	{
+		printf("Failed to load screen shader file! \n");
+		return false; 
+	}
+
+	m_screen_shader->SetActive();
+	m_screen_shader->SetInt("screenTexture", 0);
 
 	return true;
 }

@@ -18,38 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\1_LightColor.frag">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_LightColor.vert">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Model.frag">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Model.vert">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Stencil.frag">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Stencil.vert">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Grass.frag">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Grass.vert">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Window.frag">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\1_Window.vert">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -109,5 +77,61 @@
     <ClCompile Include="Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\1_LightColor.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\1_LightColor.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\1_Model.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\1_Model.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\2_Stencil.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\2_Stencil.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\6_1_Sharpen.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\6_1_Sharpen.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\5_Screen.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\5_Screen.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\3_Grass.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\3_Grass.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\4_Window.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\4_Window.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\6_2_Blur.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\6_2_Blur.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\6_3_Edge_Detection.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\6_3_Edge_Detection.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

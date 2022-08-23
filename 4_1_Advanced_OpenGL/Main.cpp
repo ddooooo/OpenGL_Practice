@@ -20,25 +20,11 @@ using namespace glm;
 
 int main(int argc, char** argv)
 {
-	Renderer::Shape a = Renderer::Shape::BOX;
-
 	Renderer* renderer = new Renderer();
 
-	renderer->Initialize(800.0f, 600.0f);
-
-	renderer->LoadPrimitive(Renderer::Shape::CUBE);
-
-	renderer->LoadPrimitive(Renderer::Shape::BOX);
-
-	if (!renderer->LoadModel("Models/Link/Link_Final.obj", false))
+	if (!renderer->Initialize(800.0f, 600.0f))
 	{
-		cout << "Failed to load model" << endl;
-		return 0;
-	}
-
-	if (!renderer->LoadShader())
-	{
-		cout << "Failed to load shaders" << endl;
+		cout << "Failed to initialize!" << endl;
 		return 0;
 	}
 
@@ -46,11 +32,6 @@ int main(int argc, char** argv)
 	{
 		renderer->Draw();
 	}
-
-	//renderer->GetShader()->UnLoad();
-	//renderer->GetLightShader()->UnLoad();
-
-	//glDeleteVertexArrays(1, &renderer->m_light_VAO);
 
 	// Terminate and clear all allocated SDL resources
 	SDL_GL_DeleteContext(renderer->GetContext());

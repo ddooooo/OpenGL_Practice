@@ -1,6 +1,7 @@
 #include "Texture.h"
 
 #include <GL/glew.h>
+#include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -22,7 +23,7 @@ bool Texture::LoadTexture()
 {
 	int nChannels = 0;
 	
-	printf("Load Texture! \n");
+	std::cout << "Load Texture! from " << m_path << std::endl;
 
 	//stbi_set_flip_vertically_on_load(true); // Flip the image upside-down
 	

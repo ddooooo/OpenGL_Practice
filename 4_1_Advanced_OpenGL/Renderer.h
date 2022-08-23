@@ -79,9 +79,25 @@ private:
 	Shader* m_outline_shader;
 	Shader* m_grass_shader;
 	Shader* m_window_shader;
+	Shader* m_screen_shader;
 
 	Texture* m_grass_texture;
 	Texture* m_window_texture;
+	
+	unsigned int m_quad_VAO;
+	unsigned int m_quad_VBO;
+	unsigned int m_FBO;
+	GLint m_default_FBO;
+	unsigned int m_framebuffer_texture;
+	unsigned int m_RBO;
+
+	int m_is_running = 1;
+	int m_type = 0;
+
+	float m_width;
+	float m_height;
+
+	map<float, vec3> m_sorted;
 
 	// Lights colors
 	vec3 m_amb = { 0.5f, 0.5f, 0.5f };
@@ -109,12 +125,17 @@ private:
 		vec3(2.0f, 0.0, -2.5f),
 		vec3(1.8f, 0.0, -3.0f)
 	};
-	
-	int m_is_running = 1;
-	int m_type = 0;
 
-	float m_width;
-	float m_height;
+	float m_quad_vertices[24] = {
+		// positions   // texCoords
+		// Left triangle
+		-1.0f, -1.0f,  0.0f, 0.0f,
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
 
-	map<float, vec3> m_sorted;
+		// Right triangle
+		 1.0f, -1.0f,  1.0f, 0.0f,
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		 1.0f,  1.0f,  1.0f, 1.0f
+	};
 };
