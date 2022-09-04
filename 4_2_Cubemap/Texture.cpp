@@ -59,7 +59,7 @@ bool Texture::LoadTexture()
 	return true;
 }
 
-bool Texture::LoadCubemapTexture(vector<string>& faces)
+bool Texture::LoadCubemapTexture(const vector<string>& faces)
 {
 	glGenTextures(1, &m_texture_ID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, m_texture_ID);

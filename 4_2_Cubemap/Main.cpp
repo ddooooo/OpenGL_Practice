@@ -34,9 +34,7 @@ int main(int argc, char** argv)
 	}
 
 	// Terminate and clear all allocated SDL resources
-	SDL_GL_DeleteContext(renderer->GetContext());
-	SDL_DestroyWindow(renderer->GetWindow());
-	SDL_Quit();
+	renderer->UnLoad();
 
 	return 0;
 }

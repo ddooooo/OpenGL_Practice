@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
-#include <stb_image.h>
+#include <stb/stb_image.h>
 #include <map>
 
 #include "Model.h"
@@ -27,23 +27,23 @@ class Renderer
 public:
 	enum class Shape
 	{
-		BOX = 0,
+		SQUARE = 0,
 		CUBE,
 	};
 
 	Renderer();
 	~Renderer();
 
-	bool Initialize(float screen_width, float screen_height);
+	bool initialize(float screen_width, float screen_height);
 
 	void Draw();
 
 	bool LoadModel(const string& path, bool flip);
-	bool LoadShader();
-	
 	bool LoadPrimitive(const Shape& shape);
-
-
+	
+	bool LoadShader();
+	unsigned int loadCubemapTexture();
+	
 	vector<Vertex> LoadVertices(const string& vert_path);
 	vector<unsigned int> LoadIndices(const string& index_path);
 
@@ -80,16 +80,18 @@ private:
 	Shader* m_grass_shader;
 	Shader* m_window_shader;
 	Shader* m_screen_shader;
+	Shader m_cubemap_shader;
 
 	Texture* m_grass_texture;
 	Texture* m_window_texture;
-	
+	Texture m_cubemap_texture;
+
 	unsigned int m_quad_VAO;
 	unsigned int m_quad_VBO;
 	unsigned int m_FBO;
 	GLint m_default_FBO;
 	unsigned int m_framebuffer_texture;
-	unsigned int m_RBO;
+	unsigned int m_RBO; // Renderbuffer attachment for depth/stencil test
 
 	int m_is_running = 1;
 	int m_type = 0;

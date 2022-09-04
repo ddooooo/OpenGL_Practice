@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{2cb3acdd-e469-4ba1-9b4a-3b7e15327482}</ProjectGuid>
-    <RootNamespace>My41AdvancedOpenGL</RootNamespace>
+    <ProjectGuid>{db65fac0-4907-46e7-b065-5547ede20861}</ProjectGuid>
+    <RootNamespace>My42Cubemap</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -88,10 +88,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\vclib;C:\vclib\glew-2.2.0\include;C:\vclib\SDL2-2.24.0\include;C:\vclib\assimp\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\vclib\SDL2-2.24.0\lib\x64;C:\vclib\glew-2.2.0\lib\Release\x64;C:\vclib\assimp\build\lib\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc142-mt.lib;SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -122,7 +125,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\vclib\SDL2-2.24.0\lib\x64;C:\vclib\glew-2.2.0\lib\Release\x64;C:\vclib\assimp\build\lib\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc142-mt.lib;SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc142-mt.lib;SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -142,17 +145,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="PointLight.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="SpotLight.h" />
-    <ClInclude Include="Texture.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -165,26 +157,26 @@
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\1_LightColor.frag" />
-    <None Include="Shaders\1_LightColor.vert" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="PointLight.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="SpotLight.h" />
+    <ClInclude Include="Texture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\2_Cubemap.frag" />
+    <None Include="Shaders\2_Cubemap.vert" />
     <None Include="Shaders\1_Model.frag" />
     <None Include="Shaders\1_Model.vert" />
-    <None Include="Shaders\2_Stencil.frag" />
-    <None Include="Shaders\2_Stencil.vert" />
-    <None Include="Shaders\3_Grass.frag" />
-    <None Include="Shaders\3_Grass.vert" />
-    <None Include="Shaders\4_Window.frag" />
-    <None Include="Shaders\4_Window.vert" />
-    <None Include="Shaders\5_Screen.frag" />
-    <None Include="Shaders\5_Screen.vert" />
-    <None Include="Shaders\6_1_Sharpen.frag" />
-    <None Include="Shaders\6_1_Sharpen.vert" />
-    <None Include="Shaders\6_2_Blur.frag" />
-    <None Include="Shaders\6_2_Blur.vert" />
-    <None Include="Shaders\6_3_Edge_Detection.frag" />
-    <None Include="Shaders\6_3_Edge_Detection.vert" />
-    <None Include="Shaders\7_1_Cubemap.frag" />
-    <None Include="Shaders\7_1_Cubemap.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Vertices\Cube\Cube_Indices_List.txt" />
+    <Text Include="Vertices\Cube\Cube_Vertices_List.txt" />
+    <Text Include="Vertices\Cube\Skybox_Vertices_List.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

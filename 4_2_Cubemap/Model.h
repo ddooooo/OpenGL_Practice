@@ -22,6 +22,12 @@ using namespace Assimp;
 class Model
 {
 public:
+
+	Model(bool gamma = false);
+	void Draw(Shader& shader);
+	bool LoadModel(string const& path);
+
+private:
 	vector<Vertex> m_vertices;
 	vector<unsigned int> m_indices;
 	
@@ -36,12 +42,6 @@ public:
 	bool m_gamma_correction;
 
 	bool debug = true;
-
-	Model(bool gamma = false);
-	void Draw(Shader& shader);
-	bool LoadModel(string const& path);
-
-private:
 	void ProcessNode(aiNode* node, const aiScene* scene);
 	
 	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);

@@ -7,7 +7,7 @@ Renderer::Renderer()
 {
 }
 
-bool Renderer::Initialize(float screen_width, float screen_height)
+bool Renderer::initialize(float screen_width, float screen_height)
 {
 	m_width = screen_width;
 	m_height = screen_height;
@@ -37,8 +37,6 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 
 	m_window = SDL_CreateWindow("Model Loading", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		static_cast<int>(m_width), static_cast<int>(m_height), SDL_WINDOW_OPENGL);
-
-
 
 	if (!m_window)
 	{
@@ -77,7 +75,7 @@ bool Renderer::Initialize(float screen_width, float screen_height)
 		return false;
 	}
 
-	if (!LoadPrimitive(Shape::BOX))
+	if (!LoadPrimitive(Shape::SQUARE))
 	{
 		cout << "Failed to load box!" << endl;
 		return false;
@@ -206,7 +204,8 @@ void Renderer::Draw()
 	m_link->Draw(*m_model_shader);
 
 	// #2 Draw a larger model with white color
-	// The pixel that is NOT equal to 1  will be passed
+	// New stencil buffer will be created based on the larger model
+	// The pixel that is NOT equal to 1 will be passed
 	// --> Thus only draw a object where the stencil buffer is equal to 0
 	// --> And it will only draw border of a model
 	glStencilFunc(GL_NOTEQUAL, 1, 0xFF); 
@@ -228,7 +227,7 @@ void Renderer::Draw()
 	glStencilMask(0xFF);
 	// Set stencil buffer with 0 --> clear stencil buffer
 	glStencilFunc(GL_ALWAYS, 0, 0xFF);
-	//Enable depth test
+	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 
 	// Enable cull buffer
@@ -284,6 +283,21 @@ void Renderer::Draw()
 		m_primitives[1].Draw();
 		//index++;
 	}
+
+
+	// Set a skybox
+	glDepthFunc(GL_LEQUAL); // To pass the depth test, it must be less than or equal to depth buffer
+	m_cubemap_shader.SetActive();
+	m_cubemap_shader.SetMat4("projection", p);
+	v = mat4(mat3(m_camera->MyLookAt()));
+	m_cubemap_shader.SetMat4("view", v);
+
+	// Draw a skybox
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_texture.GetTextureID());
+	m_primitives[0].Draw();
+	glBindVertexArray(0);
+	glDepthFunc(GL_LESS);
 
 	// Bind to default framebuffer and render a quad
 	// glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &m_default_FBO);
@@ -396,6 +410,34 @@ bool Renderer::LoadShader()
 	m_screen_shader->SetActive();
 	m_screen_shader->SetInt("screenTexture", 0);
 
+	vert_path = "Shaders/1_Cubemap.vert";
+	frag_path = "Shaders/1_Cubemap.frag";
+
+	if (!m_cubemap_shader.LoadShaderFile(vert_path, frag_path))
+	{
+		printf("Failed to load cubemap shader file! \n");
+		return false;
+	}
+
+	m_cubemap_shader.SetActive();
+	m_cubemap_shader.SetInt("skybox", 0);
+
+	vector<string> faces
+	{
+		"textures/skybox/right.jpg",
+		"textures/skybox/left.jpg",
+		"textures/skybox/top.jpg",
+		"textures/skybox/bottom.jpg",
+		"textures/skybox/front.jpg",
+		"textures/skybox/back.jpg",
+	};
+
+	if (!m_cubemap_texture.LoadCubemapTexture(faces))
+	{
+		printf("Failed to load cubemap texture \n");
+		return false;
+	}
+
 	return true;
 }
 
@@ -408,7 +450,7 @@ bool Renderer::LoadPrimitive(const Shape& shape)
 	
 	switch (shape)
 	{
-	case(Shape::BOX):
+	case(Shape::SQUARE):
 		vertex_path = "Vertices/Box/Box_Vertices_List.txt";
 		index_path = "Vertices/Box/Box_Indices_List.txt";
 		break;

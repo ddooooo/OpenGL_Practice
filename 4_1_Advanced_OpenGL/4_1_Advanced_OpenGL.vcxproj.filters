@@ -133,5 +133,11 @@
     <None Include="Shaders\6_3_Edge_Detection.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="Shaders\7_1_Cubemap.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\7_1_Cubemap.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

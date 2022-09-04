@@ -13,7 +13,7 @@ public:
 	~Texture();
 
 	bool LoadTexture();
-	bool LoadCubemapTexture(vector<string>& faces);
+	bool LoadCubemapTexture(const vector<string>& faces);
 
 	void Unload();
 	void SetActive();
