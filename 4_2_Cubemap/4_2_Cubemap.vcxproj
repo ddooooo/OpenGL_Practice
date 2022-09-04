@@ -119,7 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\vclib;C:\vclib\glew-2.2.0\include;C:\vclib\SDL2-2.24.0\include;C:\vclib\assimp\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\DOO\Documents\OpenGL_Practice\4_2_Cubemap\Sources;C:\Users\DOO\Documents\OpenGL_Practice\4_2_Cubemap\Headers;C:\vclib;C:\vclib\glew-2.2.0\include;C:\vclib\SDL2-2.24.0\include;C:\vclib\assimp\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,29 +145,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Light.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="PointLight.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="SpotLight.cpp" />
-    <ClCompile Include="Texture.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="PointLight.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="SpotLight.h" />
-    <ClInclude Include="Texture.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Shaders\2_Cubemap.frag" />
     <None Include="Shaders\2_Cubemap.vert" />
     <None Include="Shaders\1_Model.frag" />
@@ -177,6 +154,29 @@
     <Text Include="Vertices\Cube\Cube_Indices_List.txt" />
     <Text Include="Vertices\Cube\Cube_Vertices_List.txt" />
     <Text Include="Vertices\Cube\Skybox_Vertices_List.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Sources\Camera.cpp" />
+    <ClCompile Include="Sources\Light.cpp" />
+    <ClCompile Include="Sources\Main.cpp" />
+    <ClCompile Include="Sources\Mesh.cpp" />
+    <ClCompile Include="Sources\Model.cpp" />
+    <ClCompile Include="Sources\PointLight.cpp" />
+    <ClCompile Include="Sources\Renderer.cpp" />
+    <ClCompile Include="Sources\Shader.cpp" />
+    <ClCompile Include="Sources\SpotLight.cpp" />
+    <ClCompile Include="Sources\Texture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\Light.h" />
+    <ClInclude Include="Headers\Mesh.h" />
+    <ClInclude Include="Headers\Model.h" />
+    <ClInclude Include="Headers\PointLight.h" />
+    <ClInclude Include="Headers\Renderer.h" />
+    <ClInclude Include="Headers\Shader.h" />
+    <ClInclude Include="Headers\SpotLight.h" />
+    <ClInclude Include="Headers\Texture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
