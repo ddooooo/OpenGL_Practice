@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-Renderer::Renderer() : m_is_running(1), m_type(0), m_width(0), m_height(0)
+Renderer::Renderer() : m_is_running(1), m_type(0), m_width(0), m_height(0), m_Matrices_UBO(0)
 {
 	m_window = nullptr;
 	m_context = 0;
@@ -34,7 +34,7 @@ bool Renderer::InitSetup()
 	// Hardware Acceleration
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-	m_window = SDL_CreateWindow("Model Loading", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+	m_window = SDL_CreateWindow("Cubemap, Reflection, Refraction", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		static_cast<int>(m_width), static_cast<int>(m_height), SDL_WINDOW_OPENGL);
 
 	if (!m_window)
@@ -77,7 +77,7 @@ bool Renderer::initialize(const float screen_width, const float screen_height)
 	// Load models
 	m_skybox = LoadSkybox("Vertices/Cube/Skybox_Vertices_List.txt", "Vertices/Cube/Cube_Indices_List.txt");
 	m_primitives[Shape::CUBE] = LoadPrimitive(Shape::CUBE);
-	m_link = LoadModel("Models/Link/Link_Final.obj", false);
+	m_link = LoadCharacter("Models/Link/Link_Final.obj", false);
 
 	if (!m_link || !m_skybox || !m_primitives[Shape::CUBE])
 	{
@@ -86,16 +86,27 @@ bool Renderer::initialize(const float screen_width, const float screen_height)
 	}
 
 	// Load shaders
-	m_model_shader = LoadShader("Shaders/Model.vert", "Shaders/Model.frag");
-	m_cubemap_shader = LoadShader("Shaders/Cubemap.vert", "Shaders/Cubemap.frag");
-	m_cubemap_shader->SetActive();
-	m_cubemap_shader->SetInt("skybox", 0);
-	m_cube_shader = LoadShader("Shaders/1_2_Cube_Reflection.vert", "Shaders/1_2_Cube_Reflection.frag");
+	m_shaders["link"] = LoadShader("Shaders/Model.vert", "Shaders/Model.frag");
+	
+	m_shaders["cubemap"] = LoadShader("Shaders/1_1_Cubemap.vert", "Shaders/1_1_Cubemap.frag");
+	m_shaders["cubemap"]->SetActive();
+	m_shaders["cubemap"]->SetInt("skybox", 0);
+	
+	m_shaders["reflection"] = LoadShader("Shaders/1_2_Reflection.vert", "Shaders/1_2_Reflection.frag");
+	m_shaders["reflection"]->SetActive();
+	m_shaders["reflection"]->SetInt("skybox", 0);
 
-	if (!m_model_shader || !m_cubemap_shader || !m_cube_shader)
+	m_shaders["refraction"] = LoadShader("Shaders/1_3_Refraction.vert", "Shaders/1_3_Refraction.frag");
+	m_shaders["refraction"]->SetActive();
+	m_shaders["refraction"]->SetInt("skybox", 0);
+
+	for (auto& it : m_shaders)
 	{
-		printf("Failed to load some shaders \n");
-		return false;
+		if (!it.second)
+		{
+			cout << "Failed to load " << it.first << endl;
+			return false;
+		}
 	}
 
 	vector<string> faces
@@ -118,7 +129,71 @@ bool Renderer::initialize(const float screen_width, const float screen_height)
 	}
 
 	m_camera = unique_ptr<Camera>(new Camera());
+
+
+	SetupUBO();
+
 	return true;
+}
+
+void Renderer::DrawModels()
+{
+	mat4 p = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
+	mat4 v = m_camera->MyLookAt();
+	mat4 m = mat4(1.0f);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, m_Matrices_UBO);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mat4), value_ptr(p));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(mat4), sizeof(mat4), value_ptr(v));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	// Draw a reflection box
+	m_shaders["reflection"]->SetActive();
+	m = translate(m, vec3(3.0, 1.0, 1.0));
+	m_shaders["reflection"]->SetMat4("model", m);
+	m_shaders["reflection"]->SetVec3("cameraPos", m_camera->GetPos());
+
+	m_primitives[Shape::CUBE]->SetActive();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_cubemap_texture->GetTextureID());
+	m_primitives[Shape::CUBE]->Draw();
+	glBindVertexArray(0);
+
+	// Draw a refraction box
+	m_shaders["refraction"]->SetActive();
+	m = mat4(1.0f);
+	m = translate(m, vec3(-3.0, 1.0, 1.0));
+	m_shaders["refraction"]->SetMat4("model", m);
+	m_shaders["refraction"]->SetVec3("cameraPos", m_camera->GetPos());
+	
+	m_primitives[Shape::CUBE]->SetActive();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_cubemap_texture->GetTextureID());
+	m_primitives[Shape::CUBE]->Draw();
+	glBindVertexArray(0);
+
+	m_shaders["link"]->SetActive();
+	m = mat4(1.0f);
+	m = translate(m, vec3(0.0, 2.0, 0.0));
+	m_shaders["link"]->SetMat4("projection", p);
+	m_shaders["link"]->SetMat4("view", v);
+	m_shaders["link"]->SetMat4("model", m);	
+	m_link->Draw(*m_shaders["link"]);
+	glBindVertexArray(0);
+
+	// Draw a skybox
+	glDepthFunc(GL_LEQUAL); // To pass the depth test, it must be less than or equal to the depth buffer
+	m_shaders["cubemap"]->SetActive();
+	m_shaders["cubemap"]->SetMat4("projection", p);
+	v = mat4(mat3(m_camera->MyLookAt()));
+	m_shaders["cubemap"]->SetMat4("view", v);
+
+	m_skybox->SetActive();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_texture->GetTextureID());
+	m_skybox->Draw();
+	glBindVertexArray(0);
+	glDepthFunc(GL_LESS);
 }
 
 void Renderer::Draw()
@@ -150,7 +225,6 @@ void Renderer::Draw()
 		{
 			m_camera->ProcessMouseDown(m_event);		
 		}
-
 	}
 	 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -162,48 +236,12 @@ void Renderer::Draw()
 
 	SetupLight();
 
-	mat4 p = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
-	mat4 v = m_camera->MyLookAt();
-	mat4 m = mat4(1.0f);
-
-	// Draw reflection box
-	m_cube_shader->SetActive();
-	m_cube_shader->SetMat4("projection", p);
-	m_cube_shader->SetMat4("view", v);
-	m = translate(m, vec3(1.0, 1.0, 1.0));
-	m_cube_shader->SetMat4("model", m);
-	m_cube_shader->SetVec3("cameraPos", m_camera->GetPos());
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_texture->GetTextureID());
-	m_primitives[Shape::CUBE]->Draw();
-
-	// Draw Link
-	m = mat4(1.0f);
-	m = scale(m, vec3(0.5f, 0.5f, 0.5f));
-	m_model_shader->SetActive();
-	m_model_shader->SetMat4("projection", p);
-	m_model_shader->SetMat4("view", v);
-	m_model_shader->SetMat4("model", m);
-	m_link->Draw(*m_model_shader.get());
-
-
-	// Draw a skybox
-	glDepthFunc(GL_LEQUAL); // To pass the depth test, it must be less than or equal to the depth buffer
-	m_cubemap_shader->SetActive();
-	m_cubemap_shader->SetMat4("projection", p);
-	v = mat4(mat3(m_camera->MyLookAt()));
-	m_cubemap_shader->SetMat4("view", v);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_texture->GetTextureID());
-	m_skybox->Draw();
-	glBindVertexArray(0);
-	glDepthFunc(GL_LESS);
+	DrawModels();
 
 	SDL_GL_SwapWindow(m_window);
 }
 
-unique_ptr<Model> Renderer::LoadModel(const string& path, bool flip)
+unique_ptr<Model> Renderer::LoadCharacter(const string& path, bool flip)
 {
 	//m_link = new Model();
 	cout << "Load Model" << endl;
@@ -313,7 +351,6 @@ unique_ptr<Texture> Renderer::LoadSkyboxTex(const vector<string>& faces)
 		printf("Rendere failed to load skybox texture \n");
 		return nullptr;
 	}
-
 	return temp;
 }
 
@@ -330,7 +367,6 @@ vector<Vertex> Renderer::LoadVertices(const string& vert_path)
 		cout << "Renderer Failed to open the vertex file " << vert_path << endl;
 		return {};
 	}
-
 
 	string line;
 	int index_tex = 0;
@@ -351,7 +387,7 @@ vector<Vertex> Renderer::LoadVertices(const string& vert_path)
 		}
 		else if (line[0] == 'n')
 		{
-			cout << "Normal coordinate load" << endl;
+			cout << line << endl;
 			m_type = 1;
 			continue;
 		}
@@ -373,7 +409,6 @@ vector<Vertex> Renderer::LoadVertices(const string& vert_path)
 			getline(ss, vertex_y, ',');
 			getline(ss, vertex_z, ',');
 
-			//cout << vertex_x << " " << vertex_y << " " << vertex_z << endl;
 
 			//vertex.position = position;
 			vertex.position.x = stof(vertex_x);
@@ -389,13 +424,14 @@ vector<Vertex> Renderer::LoadVertices(const string& vert_path)
 
 			getline(ss, normal_x, ',');
 			getline(ss, normal_y, ',');
-			getline(ss, normal_z, ',');
+			getline(ss, normal_z);
 
 			Vertex& vertex = vertices[index_nor];
 
 			vertex.normal.x = stof(normal_x);
 			vertex.normal.y = stof(normal_y);
 			vertex.normal.z = stof(normal_z);
+			
 			++index_nor;
 		}
 		else if (m_type == 2)
@@ -455,6 +491,36 @@ vector<unsigned int> Renderer::LoadIndices(const string& index_path)
 	return indices;
 }
 
+void Renderer::SetupUBO()
+{
+	const GLuint& reflect_ID = m_shaders["reflection"]->GetShaderProgram();
+	const GLuint& refract_ID = m_shaders["refraction"]->GetShaderProgram();
+
+	// Get uniform block index of the named uniform block "Matrices" from specific shader program
+	unsigned int uniformReflect = glGetUniformBlockIndex(reflect_ID, "Matrices");
+	unsigned int uniformRefract = glGetUniformBlockIndex(refract_ID, "Matrices");
+
+	// link the uniform block to the uniform binding point, which is 0
+	//            Uniform block						binding points			uniform buffer object
+	//  reflect_shader::uniform Matrices ---------------> 0 ------------------> m_Matrices_UBO
+	//													 /|\
+	//	refract_shader::uniform Matrices -----------------
+	glUniformBlockBinding(reflect_ID, uniformReflect, 0);
+	glUniformBlockBinding(refract_ID, uniformRefract, 0);
+
+	// Create a uniform buffer object to store data 
+	glGenBuffers(1, &m_Matrices_UBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, m_Matrices_UBO);
+	// Set the initial size of uniform buffer object
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(mat4), NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	// Set up the range of buffer that links to the binding point
+	// from the first index of 'GL_UNIFORM_BUFFER m_Matrices_UBO', 
+	// get data with size of 2*mat4 with offset 0 of m_Matrices_UBO(Uniform Buffer Object)
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_Matrices_UBO, 0, 2 * sizeof(mat4));
+}
+
 void Renderer::SetupLight()
 {
 	// Lights colors
@@ -466,19 +532,21 @@ void Renderer::SetupLight()
 	vec3 cam_pos = m_camera->GetPos();
 	vec3 cam_forward = m_camera->GetForward();
 
-	m_model_shader->SetActive();
-	m_model_shader->SetVec3("viewPos", cam_pos);
+	m_shaders["link"]->SetActive();
+	m_shaders["link"]->SetVec3("viewPos", cam_pos);
 
-	m_model_shader->SetVec3("dirLight.direction", dir);
-	m_model_shader->SetVec3("dirLight.ambient", amb);
-	m_model_shader->SetVec3("dirLight.diffuse", diff);
-	m_model_shader->SetVec3("dirLight.specular", spec);
+	m_shaders["link"]->SetVec3("dirLight.direction", dir);
+	m_shaders["link"]->SetVec3("dirLight.ambient", amb);
+	m_shaders["link"]->SetVec3("dirLight.diffuse", diff);
+	m_shaders["link"]->SetVec3("dirLight.specular", spec);
 }
 
 void Renderer::UnLoad()
 {
-	m_model_shader->UnLoad();
-	m_cubemap_shader->UnLoad();
+	for (auto& it : m_shaders)
+	{
+		it.second->UnLoad();
+	}
 
 	// Terminate and clear all allocated SDL resources
 	SDL_GL_DeleteContext(m_context);

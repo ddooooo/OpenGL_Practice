@@ -61,14 +61,13 @@ public:
 	// void ProcessMesh();
 
 	void SetupMesh();
-
+	void SetActive();
 private:
 	unsigned int m_VAO;
 	unsigned int m_VBO;
 	unsigned int m_EBO;
 
-
-	bool debug = true;
+	bool m_debug;
 };
 
 #endif

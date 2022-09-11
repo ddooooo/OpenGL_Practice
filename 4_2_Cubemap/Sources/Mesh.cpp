@@ -1,16 +1,9 @@
 #include "Mesh.h"
 #include <iostream>
 using namespace std;
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<TextureS> textures, Material material)
-{
-	//cout << "Mesh Object Created" << endl;
-
-	m_vertices = vertices;
-	m_indices = indices;
-	m_textures = textures;
-
-	m_material = material;
-}
+Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<TextureS> textures, Material material) 
+	: m_vertices(vertices), m_indices(indices), m_textures(textures), m_VAO(0), m_VBO(0), m_EBO(0), m_debug(true)
+{}
 
 //void Mesh::ProcessMesh()
 //{
@@ -19,11 +12,11 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture
 
 void Mesh::Draw()
 {
-	if (debug)
+	if (m_debug)
 	{
 		cout << "Draw Primitive!" << endl;
 		//cout << m_indices.size() << endl;
-		debug = false;
+		m_debug = false;
 	}
 
 	glBindVertexArray(m_VAO);
@@ -41,7 +34,7 @@ void Mesh::Draw(Shader& shader)
 	unsigned int normal_index = 1;
 	unsigned int height_index = 1;
 	
-	if (debug)
+	if (m_debug)
 	{
 		//cout << "Draw mesh! with " << m_indices.size() << " and " << m_vertices.size() << " and " << m_textures.size() << endl;
 		
@@ -51,21 +44,21 @@ void Mesh::Draw(Shader& shader)
 
 	shader.SetActive();
 
-	if (debug)
+	if (m_debug)
 	{
 		//cout << "Set mat.ambient " << m_material.ambient.x <<  endl;
 	}
 
 	shader.SetVec3("mat.ambient", m_material.ambient);
 
-	if (debug)
+	if (m_debug)
 	{
 		//cout << "Set mat.diffuse " << m_material.diffuse.x << endl;
 	}
 
 	shader.SetVec3("mat.diffuse", m_material.diffuse);
 
-	if (debug)
+	if (m_debug)
 	{
 		//cout << "Set mat.specular " << m_material.specular.x << endl;
 		//debug = false;
@@ -92,7 +85,7 @@ void Mesh::Draw(Shader& shader)
 			index = to_string(height_index);
 		
 		//m_textures[i].SetActive();
-		if (debug)
+		if (m_debug)
 		{
 			//cout << "texture." + type + index << endl;
 			//cout << "Texture from " << m_textures[i].path << endl;
@@ -102,10 +95,10 @@ void Mesh::Draw(Shader& shader)
 		glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
 	}
 	
-	if (debug)
+	if (m_debug)
 	{
 		//cout << "Ready to draw mesh" << endl;
-		debug = false;
+		m_debug = false;
 
 	}
 
@@ -158,4 +151,9 @@ void Mesh::SetupMesh()
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
 	
+}
+
+void Mesh::SetActive()
+{
+	glBindVertexArray(m_VAO);
 }

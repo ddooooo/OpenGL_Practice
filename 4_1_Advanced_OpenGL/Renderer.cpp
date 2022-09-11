@@ -610,4 +610,3 @@ void Renderer::SortPosition()
 		m_sorted[distance] = m_windows[i];
 	}
 }
-
