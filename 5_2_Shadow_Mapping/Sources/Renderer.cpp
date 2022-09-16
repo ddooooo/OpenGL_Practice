@@ -5,8 +5,7 @@
 #include <math.h>
 
 Renderer::Renderer() : m_is_running(1), m_type(0), m_width(0), m_height(0),
-					   m_FBO(0), m_CBO(0), m_MSAA_FBO(0), m_MSAA_CBO(0), m_MSAA_RBO(0),
-					   m_frame_VAO(0), m_frame_VBO(0)
+					   m_shadow_FBO(0), m_shadow_map(0), m_frame_VAO(0), m_frame_VBO(0)
 {
 	m_window = nullptr;
 	m_context = 0;
@@ -43,7 +42,7 @@ bool Renderer::InitSetup()
 	// Hardware Acceleration
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-	m_window = SDL_CreateWindow("Instancing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+	m_window = SDL_CreateWindow("Shadow Mapping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		static_cast<int>(m_width), static_cast<int>(m_height), SDL_WINDOW_OPENGL);
 
 	if (!m_window)
@@ -66,6 +65,7 @@ bool Renderer::InitSetup()
 
 	// Enable depth buffer
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 	//glEnable(GL_MULTISAMPLE);
 
 	printf("%s \n", glGetString(GL_VERSION));
@@ -84,8 +84,9 @@ bool Renderer::Initialize(const float screen_width, const float screen_height)
 		return false;
 	}
 
+	m_primitives[Shape::FLOOR] = LoadPrimitive(Shape::FLOOR);
+ 	m_primitives[Shape::SQUARE] = LoadPrimitive(Shape::SQUARE);
 	m_primitives[Shape::CUBE] = LoadPrimitive(Shape::CUBE);
-
 	for (auto& it : m_models)
 	{
 		if (it.second == nullptr)
@@ -95,8 +96,9 @@ bool Renderer::Initialize(const float screen_width, const float screen_height)
 		}
 	}
 
-	m_shaders["cube"] = LoadShaders("Shaders/Cube.vert", "Shaders/Cube.frag");
-	m_shaders["frame"] = LoadShaders("Shaders/Frame.vert", "Shaders/Frame.frag");
+	m_shaders["shadowMap"] = LoadShaders("Shaders/5_2_ShadowMap.vert", "Shaders/5_2_ShadowMap.frag");
+	m_shaders["shadow"] = LoadShaders("Shaders/5_2_Shadow.vert", "Shaders/5_2_Shadow.frag");
+	m_shaders["light"] = LoadShaders("Shaders/5_2_Light.vert", "Shaders/5_2_Light.frag");
 
 	for (auto& it : m_shaders)
 	{
@@ -106,34 +108,24 @@ bool Renderer::Initialize(const float screen_width, const float screen_height)
 			return false;
 		}
 	}
-	
-	SetupMSAA();
 
-	m_shaders["frame"]->SetActive();
-	m_shaders["frame"]->SetInt("frameTexture", 0);
+	m_shaders["shadow"]->SetActive();
+	m_shaders["shadow"]->SetInt("shadowMap", 0);
 
 	m_camera = unique_ptr<Camera>(new Camera());
+
+	if (!SetupShadow())
+	{
+		return false;
+	}
+
 
 	return true;
 }
 
-void Renderer::DrawModels()
-{
-	mat4 p = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
-	mat4 v = m_camera->MyLookAt();
-	mat4 m = mat4(1.0f);
-
-	m_shaders["cube"]->SetActive();
-	m_shaders["cube"]->SetMat4("projection", p);
-	m_shaders["cube"]->SetMat4("view", v);
-	m_shaders["cube"]->SetMat4("model", m);
-
-	m_primitives[Shape::CUBE]->SetActive();
-	m_primitives[Shape::CUBE]->Draw();
-}
-
 void Renderer::Draw()
 {
+
 	// Get current frame for camera delta time 
 	float current_frame = (float)SDL_GetTicks() * 0.001f;
 	float last_frame = m_camera->GetLastFrame();
@@ -163,41 +155,96 @@ void Renderer::Draw()
 		}
 	}
 
-
-	// Need to clear color, depth, and stencil buffer for every frame
-	// color, depth, and stencil are updated for every frame
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-
-	// Render a original scene with multisample anti-aliasing buffer
-	glBindFramebuffer(GL_FRAMEBUFFER, m_MSAA_FBO);
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
-	// Draw a cube
-	DrawModels();
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_shadow_FBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
-	// Blit multisampled buffer to normal colorbuffer
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_MSAA_FBO);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
-	glBlitFramebuffer(0, 0, static_cast<GLint>(m_width), static_cast<GLint>(m_height), 
-		0, 0, static_cast<GLint>(m_width), static_cast<GLint>(m_height), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	vec3 light_pos = { -2.0f, 4.0f, -1.0f };
+	mat4 ortho_proj, light_view;
+	ortho_proj = ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
+	light_view = lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+	mat4 light_proj = ortho_proj * light_view;
 
-	// Render a multisampled scene on a quad with texture image sampled from Multisample color buffer
+	m_shaders["shadowMap"]->SetActive();
+	m_shaders["shadowMap"]->SetMat4("lightProjection", light_proj);
+	glCullFace(GL_FRONT);
+	RenderScene(*m_shaders["shadowMap"]);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glCullFace(GL_BACK);
+	glViewport(0, 0, m_width, m_height);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	glDisable(GL_DEPTH_TEST);
 
-	// Draw a framebuffer
-	m_shaders["frame"]->SetActive();
-	glBindVertexArray(m_frame_VAO);
+	mat4 p = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
+	mat4 v = m_camera->MyLookAt();
+	mat4 m = mat4(1.0f);
+	m = translate(m, light_pos);
+	m = scale(m, vec3(0.2));
+
+	m_shaders["light"]->SetActive();
+	m_shaders["light"]->SetMat4("projection", p);
+	m_shaders["light"]->SetMat4("view", v);
+	m_shaders["light"]->SetMat4("model", m);
+	m_primitives[Shape::CUBE]->SetActive();
+	m_primitives[Shape::CUBE]->Draw();
+
+	m_shaders["shadow"]->SetActive();
+	m_shaders["shadow"]->SetMat4("projection", p);
+	m_shaders["shadow"]->SetMat4("view", v);
+
+	m_shaders["shadow"]->SetMat4("lightMatrix", light_proj);
+	m_shaders["shadow"]->SetVec3("lightPos", light_pos);
+	m_shaders["shadow"]->SetVec3("viewPos", m_camera->GetPos());
+
+
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_CBO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
+
+	RenderScene(*m_shaders["shadow"]);
+
+	//glDisable(GL_DEPTH_TEST);
+	//m_shaders["frame"]->SetActive();
+	//glBindVertexArray(m_frame_VAO);
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, m_shadow_map);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	SDL_GL_SwapWindow(m_window);
+}
+
+void Renderer::RenderScene(Shader& shader)
+{
+	mat4 m = mat4(1.0f);
+	shader.SetMat4("model", m);
+	m_primitives[Shape::FLOOR]->SetActive();
+	m_primitives[Shape::FLOOR]->Draw();
+
+	m = mat4(1.0f);
+	m = translate(m, vec3(0.0f, 1.5f, 0.0f));
+	m = scale(m, vec3(0.5f));
+	shader.SetMat4("model", m);
+	m_primitives[Shape::CUBE]->SetActive();
+	m_primitives[Shape::CUBE]->Draw();
+
+	m = mat4(1.0f);
+	m = translate(m, vec3(2.0f, 0.5f, 1.0f));
+	m = scale(m, vec3(0.5f));
+	shader.SetMat4("model", m);
+	m_primitives[Shape::CUBE]->SetActive();
+	m_primitives[Shape::CUBE]->Draw();
+
+	m = mat4(1.0f);
+	m = translate(m, vec3(-1.0f, 0.0f, 2.0f));
+	m = rotate(m, radians(60.0f), normalize(vec3(1.0, 0.0, 1.0)));
+	m = scale(m, vec3(0.25f));
+	shader.SetMat4("model", m);
+	m_primitives[Shape::CUBE]->SetActive();
+	m_primitives[Shape::CUBE]->Draw();
 }
 
 unique_ptr<Model> Renderer::LoadModel(const string& path, int amount, bool flip)
@@ -264,26 +311,31 @@ unique_ptr<Model> Renderer::LoadModel(const string& path, int amount, bool flip)
 
 unique_ptr<Mesh> Renderer::LoadPrimitive(const Shape& shape)
 {
-	cout << "Load Primitive!" << endl;
+	//cout << "Load Primitive!" << endl;
 
 	string v_path = "";
 	string i_path = "";
 	
 	switch (shape)
 	{
-	case(Shape::SQUARE):
-		v_path = "Vertices/Box/Box_Vertices_List.txt";
-		i_path = "Vertices/Box/Box_Indices_List.txt";
-		break;
+		case(Shape::SQUARE):
+			v_path = "Vertices/Plane/Plane_Vertices_List.txt";
+			i_path = "Vertices/Plane/Plane_Indices_List.txt";
+			break;
 
-	case(Shape::CUBE):
-		v_path = "Vertices/Cube/Cube_Vertices_List.txt";
-		i_path = "Vertices/Cube/Cube_Indices_List.txt";
-		break;
-		
-	default:
-		cout << "Invalide Shape!" << endl;
-		return nullptr;
+		case(Shape::CUBE):
+			v_path = "Vertices/Cube/Cube_Vertices_List.txt";
+			i_path = "Vertices/Cube/Cube_Indices_List.txt";
+			break;
+
+		case(Shape::FLOOR):
+			v_path = "Vertices/Plane/Floor_Vertices_List.txt";
+			i_path = "Vertices/Plane/Plane_Indices_List.txt";
+			break;
+
+		default:
+			cout << "Invalide Shape!" << endl;
+			return nullptr;
 	}
 
 	vector<Vertex> vertices = LoadVertices(v_path);
@@ -307,44 +359,6 @@ unique_ptr<Mesh> Renderer::LoadPrimitive(const Shape& shape)
 	return primitive;
 }
 
-unique_ptr<Mesh> Renderer::LoadSkybox(const string& v_path, const string& i_path)
-{
-	cout << "Load skybox" << endl;
-
-	vector<Vertex> vertices = LoadVertices(v_path);
-	vector<unsigned int> indices = LoadIndices(i_path);
-
-	if (vertices.empty())
-	{
-		printf("Renderer Failed to load skybox's vertices \n");
-		return nullptr;
-	}
-	
-	if (indices.empty())
-	{
-		printf("Renderer Failed to load skybox's indices \n");
-		return nullptr;
-	}
-	
-	unique_ptr<Mesh> skybox(new Mesh(LoadVertices(v_path), LoadIndices(i_path)));
-	skybox->SetupMesh();
-
-	return skybox;
-}
-
-unique_ptr<Texture> Renderer::LoadSkyboxTex(const vector<string>& faces)
-{
-	cout << "Load skybox texture" << endl;;
-
-	unique_ptr<Texture> temp(new Texture());
-	if (!temp->LoadCubemapTexture(faces))
-	{
-		printf("Rendere failed to load skybox texture \n");
-		return nullptr;
-	}
-	return temp;
-}
-
 unique_ptr<Shader> Renderer::LoadShaders(const string& vert, const string& frag, const string& geom)
 {
 	cout << "Load Shader!" << endl;
@@ -363,7 +377,7 @@ vector<Vertex> Renderer::LoadVertices(const string& vert_path)
 {
 	vector<Vertex> vertices;
 
-	cout << "Load Vertices!" << endl;
+	//cout << "Load Vertices!" << endl;
 	
 	ifstream vertex_file(vert_path);
 	
@@ -386,19 +400,19 @@ vector<Vertex> Renderer::LoadVertices(const string& vert_path)
 		}
 		else if (line[0] == 'v')
 		{
-			cout << "Vertex load" << endl;
+			//cout << "Vertex load" << endl;
 			m_type = 0;
 			continue;
 		}
 		else if (line[0] == 'n')
 		{
-			cout << line << endl;
+			//cout << line << endl;
 			m_type = 1;
 			continue;
 		}
 		else if (line[0] == 't')
 		{
-			cout << "Texture coordinate load" << endl;
+			//cout << "Texture coordinate load" << endl;
 			m_type = 2;
 			continue;
 		}
@@ -461,7 +475,7 @@ vector<Vertex> Renderer::LoadVertices(const string& vert_path)
 
 vector<unsigned int> Renderer::LoadIndices(const string& index_path)
 {
-	cout << "Load indices!" << endl;
+	//cout << "Load indices!" << endl;
 
 	vector<unsigned int> indices;
 
@@ -496,11 +510,10 @@ vector<unsigned int> Renderer::LoadIndices(const string& index_path)
 	return indices;
 }
 
-void Renderer::SetupMSAA()
+bool Renderer::SetupShadow()
 {
-	cout << "Setup Multisample anti-aliasing" << endl;
+	cout << "Setup Quad for drawing framebuffer texture" << endl;
 
-	// Set vertex buffer and vertex array object for quad to draw a framebuffer
 	glGenVertexArrays(1, &m_frame_VAO);
 	glGenBuffers(1, &m_frame_VBO);
 	glBindVertexArray(m_frame_VAO);
@@ -509,99 +522,50 @@ void Renderer::SetupMSAA()
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2*sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-	// MSAA - multisample framebuffer object
-	glGenFramebuffers(1, &m_MSAA_FBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_MSAA_FBO);
+
+	cout << "Setup Depth map" << endl;
+
+	// Framebuffer to store depth values(shadow map)
+	glGenFramebuffers(1, &m_shadow_FBO);
+	//glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_FBO);
+
+	// Texture for shadow framebuffer
+	glGenTextures(1, &m_shadow_map);
+	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	
-	// MSAA - color buffer object for multisample framebuffer
-	glGenTextures(1, &m_MSAA_CBO);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_MSAA_CBO);
-	// true - to set the identical sample location and number of samples for image framebuffer
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height), GL_TRUE);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_MSAA_CBO, 0);
+	if (glGetError() != GL_NO_ERROR)
+	{
+		cout << "error " << glGetError() << endl;
+		cout << m_shadow_map << endl;
+		return false;
+	}
 
-	// MSAA - renderer object attachment(stencil/depth buffer) for multisample framebuffer
-	glGenRenderbuffers(1, &m_MSAA_RBO);
-	glBindRenderbuffer(GL_RENDERBUFFER, m_MSAA_RBO);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height));
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_MSAA_RBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_FBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_shadow_map, 0);
 	
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	// Disable writes to color buffer, as shadow map will not output the color
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	
+	auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if ( status != GL_FRAMEBUFFER_COMPLETE)
 	{
-		cerr << "Error: framebuffer is not complete" << endl;
+		cout << "Framebuffer error " << status << endl;
+		return false;
 	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	glGenFramebuffers(1, &m_FBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
-
-	// Color attachment texture - normal texture store a multisampled texture
-	glGenTextures(1, &m_CBO);
-	glBindTexture(GL_TEXTURE_2D, m_CBO);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_CBO, 0);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	{
-		cerr << "Error: framebuffer is not complete" << endl;
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-//void Renderer::SetupUBO()
-//{
-//	const GLuint& reflect_ID = m_shaders["reflection"]->GetShaderProgram();
-//	const GLuint& refract_ID = m_shaders["refraction"]->GetShaderProgram();
-//
-//	// Get uniform block index of the named uniform block "Matrices" from specific shader program
-//	unsigned int uniformReflect = glGetUniformBlockIndex(reflect_ID, "Matrices");
-//	unsigned int uniformRefract = glGetUniformBlockIndex(refract_ID, "Matrices");
-//
-//	// link the uniform block to the uniform binding point, which is 0
-//	//            Uniform block						binding points			uniform buffer object
-//	//  reflect_shader::uniform Matrices ---------------> 0 ------------------> m_Matrices_UBO
-//	//													 /|\
-//	//	refract_shader::uniform Matrices -----------------
-//	glUniformBlockBinding(reflect_ID, uniformReflect, 0);
-//	glUniformBlockBinding(refract_ID, uniformRefract, 0);
-//
-//	// Create a uniform buffer object to store data 
-//	glGenBuffers(1, &m_Matrices_UBO);
-//	glBindBuffer(GL_UNIFORM_BUFFER, m_Matrices_UBO);
-//	// Set the initial size of uniform buffer object
-//	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(mat4), NULL, GL_STATIC_DRAW);
-//	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-//
-//	// Set up the range of buffer that links to the binding point
-//	// from the first index of 'GL_UNIFORM_BUFFER m_Matrices_UBO', 
-//	// get data with size of 2*mat4 with offset 0 of m_Matrices_UBO(Uniform Buffer Object)
-//	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_Matrices_UBO, 0, 2 * sizeof(mat4));
-//}
-
-void Renderer::SetupLight()
-{
-	// Lights colors
-	vec3 amb = { 0.5f, 0.5f, 0.5f };
-	vec3 diff = { 1.0f, 1.0f, 1.0f };
-	vec3 spec = { 0.5f, 0.5f, 0.5f };
-	vec3 dir = { -0.2f, -1.0f, -0.3f };
-
-	vec3 cam_pos = m_camera->GetPos();
-	vec3 cam_forward = m_camera->GetForward();
-
-	m_shaders["link"]->SetActive();
-	m_shaders["link"]->SetVec3("viewPos", cam_pos);
-
-	m_shaders["link"]->SetVec3("dirLight.direction", dir);
-	m_shaders["link"]->SetVec3("dirLight.ambient", amb);
-	m_shaders["link"]->SetVec3("dirLight.diffuse", diff);
-	m_shaders["link"]->SetVec3("dirLight.specular", spec);
+	
+	return true;
 }
 
 void Renderer::UnLoad()

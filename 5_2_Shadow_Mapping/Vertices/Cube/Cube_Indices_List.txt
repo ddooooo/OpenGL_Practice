@@ -1,0 +1,18 @@
+# Front face - counter clockwise
+0, 1, 2
+0, 2, 3
+# Right face
+4, 5, 6
+4, 6, 7
+# top face
+8, 9, 10
+8, 10, 11
+# Left face
+12, 13, 15
+12, 15, 14
+# Bottom face
+16, 17, 19
+16, 19, 18
+# Back face
+20, 21, 23
+20, 23, 22
