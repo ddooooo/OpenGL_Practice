@@ -1,7 +1,6 @@
 #include "Renderer.h"
 
 using namespace std;
-using namespace glm;
 
 int main(int argc, char** argv)
 {
@@ -9,15 +8,12 @@ int main(int argc, char** argv)
 
 	if (!renderer->Initialize(800.0f, 600.0f))
 	{
-		cout << "Failed to initialize!" << endl;
+		cerr << "Failed to initialize!" << endl;
 		return 0;
 	}
 
-	while (renderer->IsRunning())
-	{
-		renderer->Draw();
-	}
-
+	renderer->Run();
+	
 	// Terminate and clear all allocated SDL resources
 	renderer->UnLoad();
 

@@ -5,8 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-Model::Model(vector<mat4> matrices, bool gamma) 
-	  :   m_matrices(matrices), m_gamma_correction(gamma)
+Model::Model(string const& path, bool gamma) : m_path(path), m_gamma_correction(gamma)
 {}
 
 void Model::Draw(Shader& shader)
@@ -18,21 +17,15 @@ void Model::Draw(Shader& shader)
 	}
 
 	for (unsigned int i = 0; i < m_meshes.size(); ++i)
-		m_meshes[i].Draw(shader);
+		m_meshes[i]->Draw(shader);
 }
 
-bool Model::LoadModel(string const & path)
+bool Model::LoadModel()
 {
-	cout << "Load model! " << path <<  endl;
-
-	if (!m_matrices.empty())
-	{
-		cout << "Create a instance buffer object " << m_matrices.size() << endl;
-		// create an instanced buffer object to store the model matrix of each rock
-	}
+	cout << "Load model! " << m_path <<  endl;
 
 	Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+	const aiScene* scene = importer.ReadFile(m_path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 												   aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -42,8 +35,8 @@ bool Model::LoadModel(string const & path)
 	}
 
 	// The directory path of the file path
-	m_directory = path.substr(0, path.find_last_of('/'));
-	
+	m_directory = m_path.substr(0, m_path.find_last_of('/'));
+	cout << "directory: " << m_directory << endl;
 	// Process ASSIMP's root node recursively
 	ProcessNode(scene->mRootNode, scene);
 
@@ -57,9 +50,9 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* ai_mesh = scene->mMeshes[node->mMeshes[i]];
-		Mesh mesh = ProcessMesh(ai_mesh, scene);
-		mesh.SetupMesh();
-		m_meshes.push_back(mesh);
+		unique_ptr<Mesh> mesh = ProcessMesh(ai_mesh, scene);
+		mesh->SetupMesh();
+		m_meshes.push_back(move(mesh));
 	}
 
 	// Process all the children node recursively for processing a mesh of each children node
@@ -69,7 +62,7 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene)
 	}
 }
 
-Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
 	//cout << "Process Mesh!" << endl;
 
@@ -87,7 +80,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	
 	for (unsigned int i = 0; i < num_vertices; ++i)
 	{
-		Vertex vertex;
+		VertexLayout vertex;
 		vec3 temp;
 		
 		// Convert Assimp::vec3 to glm::vec3
@@ -137,27 +130,34 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	m_material = LoadMaterial(material);
 
 	// Load Diffuse from texture
-	vector<TextureS> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-	m_textures.insert(m_textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+	vector<unique_ptr<Texture>> diffuseMaps = move(LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse"));
+	m_textures.insert(m_textures.end(), 
+				make_move_iterator(diffuseMaps.begin()), 
+				make_move_iterator(diffuseMaps.end())
+	);
 
 	// Load specular from texture
-	vector<TextureS> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-	m_textures.insert(m_textures.end(), specularMaps.begin(), specularMaps.end());
+	vector<unique_ptr<Texture>> specularMaps = move(LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular"));
+	m_textures.insert(m_textures.end(), 
+				make_move_iterator(specularMaps.begin()), 
+				make_move_iterator(specularMaps.end())
+	);
 	
 	// Load normal map from texture
-	vector<TextureS> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-	m_textures.insert(m_textures.end(), normalMaps.begin(), normalMaps.end());
+	vector<unique_ptr<Texture>> normalMaps = move(LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal"));
+	m_textures.insert(m_textures.end(), 
+				make_move_iterator(normalMaps.begin()), 
+				make_move_iterator(normalMaps.end())
+	);
 	
 	// Load height map from texture
-	vector<TextureS> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
-	m_textures.insert(m_textures.end(), heightMaps.begin(), heightMaps.end());
+	vector<unique_ptr<Texture>> heightMaps = move(LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient"));
+	m_textures.insert(m_textures.end(), 
+				make_move_iterator(heightMaps.begin()), 
+				make_move_iterator(heightMaps.end())
+	);
 
-	/*for (int i = 0; i < m_textures.size(); ++i)
-	{
-		cout << m_textures[i].path << " ";
-	}
-	cout << endl;*/
-	return Mesh(m_vertices, m_indices, m_textures, m_matrices, m_material);
+	return make_unique<Mesh>(m_vertices, m_indices, move(m_textures), m_material);
 }
 
 Material Model::LoadMaterial(aiMaterial* mat)
@@ -172,21 +172,6 @@ Material Model::LoadMaterial(aiMaterial* mat)
 		cerr << "Material does not have any name..." << endl;
 		return material;
 	}
-
-	//cout << "Material ready to load" << endl;
-	//bool skip = false;
-
-	//for (unsigned int i = 0; i < m_materials_loaded.size(); ++i)
-	//{
-	//	if (strcmp(m_materials_loaded[i].type.data(), str.C_Str()) == 0)
-	//	{
-	//		// if a material was loaded before
-	//		// just push the material to 'materials' vector container
-	//		materials.push_back(m_materials_loaded[i]);
-	//		skip = true;
-	//		break;
-	//	}
-	//}
 
 	aiColor3D color(0.0f, 0.0f, 0.0f);
 
@@ -232,28 +217,28 @@ Material Model::LoadMaterial(aiMaterial* mat)
 	return material;
 }
 
-vector<TextureS> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
+vector<unique_ptr<Texture>> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
 {
 	//cout << "Load Material Texture " << typeName << " " << mat->GetTextureCount(type) << endl;
 
-	vector<TextureS> textures;
+	vector<unique_ptr<Texture>> textures;
 	
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i)
 	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
 		bool skip = false;
-
-		//cout << "str: " << str.C_Str() << endl;
+		string path = m_directory + '/' + str.C_Str();
+		cout << "path: " << path << endl;
 
 		// Check if the texture was loaded before
 		for (unsigned int j = 0; j < m_textures_loaded.size(); ++j)
 		{
-			if (strcmp(m_textures_loaded[j].path.data(), str.C_Str()) == 0)
+			if (strcmp(m_textures_loaded[j]->GetPath().data(), path.c_str()) == 0)
 			{
 				// If the texture was loaded before, 
 				// just push the loaded texture to the textures container
-				textures.push_back(m_textures_loaded[j]);
+				textures.push_back(move(m_textures_loaded[j]));
 				skip = true;
 				break;
 			}
@@ -261,59 +246,12 @@ vector<TextureS> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type
 
 		if (!skip)
 		{
-			TextureS texture;
-			texture.id = TextureFromFile(str.C_Str(), m_directory);
-			texture.type = typeName;
-			texture.path = str.C_Str();
-			textures.push_back(texture);
-			m_textures_loaded.push_back(texture);
+			unique_ptr<Texture> texture = make_unique<Texture>(path, typeName);
+			texture->LoadTexture();
+			textures.push_back(move(texture));
+			m_textures_loaded.push_back(move(texture));
 		}
 	}
 	
 	return textures;
 }
-
-unsigned int Model::TextureFromFile(const char* path, const string& directory, bool gamma)
-{
-
-	string fileName = string(path);
-	fileName = directory + '/' + fileName;
-	//cout << "Load Texture! from " << fileName << endl;
-
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-
-	// Load a texture
-	int width, height, num_channel;
-	unsigned char* texture = stbi_load(fileName.c_str(), &width, &height, &num_channel, 0);
-	if (texture)
-	{
-		GLenum format = GL_RED;
-		if (num_channel == 1)
-			format = GL_RED;
-		else if (num_channel == 3)
-			format = GL_RGB;
-		else if (num_channel == 4)
-			format = GL_RGBA;
-
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, texture);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_image_free(texture);
-	}
-	else
-	{
-		cout << "Texture failed to load at path: " << path << endl;
-		stbi_image_free(texture);
-	}
-
-	return textureID;
-}
-
-

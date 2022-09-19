@@ -17,18 +17,12 @@ using namespace glm;
 
 #define MAX_BONE_INFLUENCE 4
 
-struct Vertex
+struct VertexLayout
 {
 	vec3 position = {0.0f, 0.0f, 0.0f};
 	vec3 normal = {0.0f, 0.0f, 0.0f};
+	vec3 tangent = { 0.0f, 0.0f, 0.0f };
 	vec2 texCoords = {0.0f, 0.0f};
-};
-
-struct TextureS
-{
-	unsigned int id;
-	string type;
-	string path;
 };
 
 struct Material
@@ -43,32 +37,31 @@ struct Material
 class Mesh
 {
 public:
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indices = {}, 
-		vector<TextureS> textures = {}, vector<mat4> matrices = {}, Material material = {});
+	Mesh(vector<VertexLayout> vertices, vector<unsigned int> indices = {}, 
+		 vector<unique_ptr<Texture>> textures = {}, Material material = {}, vector<mat4> matrices = {});
 
 	// Render the mesh
 	void Draw();
 	void Draw(Shader& shader);
 
-	unsigned int GetVAO() const { return m_VAO; }
 	void SetupMesh();
 	void SetActive() const;
 
-	// Process vertices/indices/textures
-	// void ProcessMesh();
-
 private:
-	vector<Vertex> m_vertices;
+	vector<VertexLayout> m_vertices;
 	vector<unsigned int> m_indices;
-	vector<TextureS> m_textures;
+	vector<unique_ptr<Texture>> m_textures;
 	vector<mat4> m_matrices;
 	Material m_material;
 
 	unsigned int m_VAO;
-	unsigned int m_VBO;
-	unsigned int m_EBO;
-	unsigned int m_IBO;
 
 	bool m_debug;
 };
+
+ostream& operator<<(ostream& os, const vec2& v);
+ostream& operator<<(ostream& os, const vec3& v);
+ostream& operator<<(ostream& os, const vec4& v);
+ostream& operator<<(ostream& os, const mat3& m);
+ostream& operator<<(ostream& os, const mat4& m);
 #endif

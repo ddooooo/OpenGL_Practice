@@ -6,7 +6,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-Texture::Texture() : m_texture_ID(0), m_width(0), m_height(0)
+Texture::Texture() : m_texture_ID(0), m_width(0), m_height(0), m_path("")
 {
 }
 
@@ -14,6 +14,13 @@ Texture::Texture(const string& path) : m_texture_ID(0), m_width(0), m_height(0)
 {
 	m_path = path;
 }
+
+Texture::Texture(const string& path, const string& type) : m_texture_ID(0), m_width(0), m_height(0)
+{
+	m_path = path;
+	m_type = type;
+}
+
 
 Texture::~Texture()
 {
@@ -31,7 +38,8 @@ bool Texture::LoadTexture()
 
 	if (!texture)
 	{
-		printf("stbi_load failed to load image %s \n", m_path.c_str());
+		cout << "Texture failed to load at path: " << m_path << endl;
+		stbi_image_free(texture);
 		return false;
 	}
 
@@ -46,8 +54,6 @@ bool Texture::LoadTexture()
 	glTexImage2D(GL_TEXTURE_2D, 0, format, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, texture);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	stbi_image_free(texture);
-
 	// Set texture wrapping parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -58,6 +64,8 @@ bool Texture::LoadTexture()
 	// Set texture filtering parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	stbi_image_free(texture);
 
 	return true;
 }

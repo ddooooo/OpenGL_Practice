@@ -14,9 +14,10 @@ class Shader
 {
 public:
 	Shader();
+	Shader(const string& vert_path, const string& frag_path, const string& geom_path = "");
 	~Shader();
 
-	bool LoadShaderFile(const string& vert_path, const string& frag_path, const string& geom_path = "");
+	bool LoadShaderFile();
 	void UnLoad();
 	void SetActive();
 
@@ -26,16 +27,12 @@ public:
 	void SetVec3(const string& name, float x, float y, float z) const;
 	void SetMat4(const string& name, mat4& matrix) const;
 
-
-	GLuint GetShaderProgram() const { return m_shader_ID; };
-
 private:
-	bool CompileShader(const string& fileName, GLenum shaderType,
-		GLuint& outShader);
+	bool CompileShader(const string& fileName, GLenum shaderType, GLuint& outShader);
 	bool IsCompiled(GLuint& shader);
 
-	GLuint m_vert_shader;
-	GLuint m_frag_shader;
-	GLuint m_geom_shader;
 	GLuint m_shader_ID;
+	const string m_vert_path;
+	const string m_frag_path;
+	const string m_geom_path;
 };

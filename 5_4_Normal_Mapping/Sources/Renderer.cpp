@@ -1,22 +1,57 @@
-#include "..\Headers\Renderer.h"
+#include "Renderer.h"
 #include <fstream>
 #include <sstream>
 #include <random>
 #include <math.h>
 
-Renderer::Renderer() : m_is_running(1), m_type(0), m_width(0), m_height(0),
-					   m_shadow_FBO(0), m_shadow_map(0), m_frame_VAO(0), m_frame_VBO(0)
+Renderer::Renderer() : m_is_running(1), m_width(0), m_height(0)
 {
 	m_window = nullptr;
 	m_context = 0;
 }
 
-Renderer::~Renderer()
+Renderer::~Renderer() {}
+
+bool Renderer::Initialize(const float screen_width, const float screen_height)
 {
+	cout << "Initialize" << endl;
+	m_width = screen_width;
+	m_height = screen_height;
+
+	if (!InitSetup())
+	{
+		printf("Failed to init setup \n");
+		return false;
+	}
+
+	if (!InitPrimitive())
+	{
+		return false;
+	}
+
+	if (!InitShader())
+	{
+		return false;
+	}
+
+	if (!InitModel())
+	{
+		return false;
+	}
+
+	if (!InitTexture())
+	{
+		return false;
+	}
+
+	m_camera = unique_ptr<Camera>(new Camera());
+	
+	return true;
 }
 
 bool Renderer::InitSetup()
 {
+	cout << "InitSetup" << endl;
 	SDL_Init(SDL_INIT_VIDEO);
 
 	// Set core OpenGL profile
@@ -36,14 +71,12 @@ bool Renderer::InitSetup()
 
 	// Set double buffering
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
 	// Hardware Acceleration
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-	m_window = SDL_CreateWindow("Shadow Mapping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		static_cast<int>(m_width), static_cast<int>(m_height), SDL_WINDOW_OPENGL);
+	m_window = SDL_CreateWindow("Normal Mapping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+							static_cast<int>(m_width), static_cast<int>(m_height), SDL_WINDOW_OPENGL);
 
 	if (!m_window)
 	{
@@ -65,7 +98,7 @@ bool Renderer::InitSetup()
 
 	// Enable depth buffer
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	//glEnable(GL_MULTISAMPLE);
 
 	printf("%s \n", glGetString(GL_VERSION));
@@ -73,60 +106,112 @@ bool Renderer::InitSetup()
 	return true;
 }
 
-bool Renderer::Initialize(const float screen_width, const float screen_height)
+bool Renderer::InitPrimitive()
 {
-	m_width = screen_width;
-	m_height = screen_height;
-
-	if (!InitSetup())
+	cout << "InitPrimitive" << endl;
+	m_primitives[Shape::FLOOR] = unique_ptr<Primitive>(new Primitive(Shape::FLOOR));
+	m_primitives[Shape::SQUARE] = unique_ptr<Primitive>(new Primitive(Shape::SQUARE));
+	m_primitives[Shape::CUBE] = unique_ptr<Primitive>(new Primitive(Shape::CUBE));
+	for (auto& it : m_primitives)
 	{
-		printf("Failed to init setup \n");
-		return false;
-	}
-
-	m_primitives[Shape::FLOOR] = LoadPrimitive(Shape::FLOOR);
- 	m_primitives[Shape::SQUARE] = LoadPrimitive(Shape::SQUARE);
-	m_primitives[Shape::CUBE] = LoadPrimitive(Shape::CUBE);
-	for (auto& it : m_models)
-	{
-		if (it.second == nullptr)
+		if (!it.second->LoadPrimitive())
 		{
-			cout << "Faield to load planet or rock" << endl;
+			cerr << "Faield to load Primitive: " << it.first << endl;
 			return false;
 		}
 	}
-
-	m_shaders["shadowMap"] = LoadShaders("Shaders/5_2_ShadowMap.vert", "Shaders/5_2_ShadowMap.frag");
-	m_shaders["shadow"] = LoadShaders("Shaders/5_2_Shadow.vert", "Shaders/5_2_Shadow.frag");
-	m_shaders["light"] = LoadShaders("Shaders/5_2_Light.vert", "Shaders/5_2_Light.frag");
-
-	for (auto& it : m_shaders)
-	{
-		if (it.second == nullptr)
-		{
-			cout << "Failed to load one of the shaders" << endl;
-			return false;
-		}
-	}
-
-	m_shaders["shadow"]->SetActive();
-	m_shaders["shadow"]->SetInt("shadowMap", 0);
-
-	m_camera = unique_ptr<Camera>(new Camera());
-
-	if (!SetupShadow())
-	{
-		return false;
-	}
-
 
 	return true;
 }
 
-void Renderer::Draw()
+bool Renderer::InitModel()
 {
+	cout << "InitModel" << endl;
+	m_models["planet"] = unique_ptr<Model>(new Model("Models/planet/planet.obj"));
 
-	// Get current frame for camera delta time 
+	for (auto& it : m_models)
+	{
+		if (!it.second->LoadModel())
+		{
+			cout << "Failed to load model " << it.first << endl;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool Renderer::InitShader()
+{
+	cout << "InitShader" << endl;
+	
+	m_shaders["planet"] = unique_ptr<Shader>(new Shader("Shaders/Planet.vert", "Shaders/Planet.frag"));
+	m_shaders["floor"] = unique_ptr<Shader>(new Shader("Shaders/Floor.vert", "Shaders/Floor.frag"));
+	m_shaders["light"] = unique_ptr<Shader>(new Shader("Shaders/Light.vert", "Shaders/Light.frag"));
+	
+	for (auto& it : m_shaders)
+	{
+		if (!it.second->LoadShaderFile())
+		{
+			cout << "Failed to load shader file " << it.first << endl;
+			return false;
+		}
+	}
+
+	m_shaders["floor"]->SetActive();
+	m_shaders["floor"]->SetInt("floor", 0);
+	m_shaders["floor"]->SetInt("normalMap", 1);
+
+	return true;
+}
+
+bool Renderer::InitTexture()
+{
+	cout << "Init Texture" << endl;
+	m_texture = unique_ptr<Texture>(new Texture("Textures/Wall.jpg"));
+
+	if (!m_texture->LoadTexture())
+	{
+		cout << "Failed to load texture" << endl;
+		return false;
+	}
+
+	m_normal_map = unique_ptr<Texture>(new Texture("Textures/Wall_Normal.jpg"));
+
+	if (!m_normal_map->LoadTexture())
+	{
+		cout << "Failed to load normal map" << endl;
+		return false;
+	}
+
+	return true;
+}
+
+bool Renderer::InitShadowFBO()
+{
+	cout << "InitShadowFBO" << endl;
+	m_shadow_FBO = unique_ptr<ShadowCubemapFBO>(new ShadowCubemapFBO(SHADOW_WIDTH, SHADOW_HEIGHT));
+	if (!m_shadow_FBO->Init())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void Renderer::Run()
+{
+	cout << "Run" << endl;
+	while (m_is_running)
+	{
+		Render();
+	}
+}
+
+void Renderer::Render()
+{
+	//cout << "Render " << endl;
+	// Get current frame to calculate camera delta time 
 	float current_frame = (float)SDL_GetTicks() * 0.001f;
 	float last_frame = m_camera->GetLastFrame();
 	m_camera->SetDeltaTime(current_frame - last_frame);
@@ -134,438 +219,183 @@ void Renderer::Draw()
 
 	m_camera->ProcessInput();
 
-	SDL_Event m_event;
-
-	while (SDL_PollEvent(&m_event))
-	{
-		if (m_event.type == SDL_QUIT)
-		{
-			m_is_running = 0;
-		}
-
-		if (m_event.type == SDL_MOUSEBUTTONUP)
-		{
-			m_camera->ProcessMouseUp(m_event, m_window, 
-				static_cast<int>(m_width/2), static_cast<int>(m_height/2));
-		}
-
-		if (m_event.type == SDL_MOUSEMOTION)
-		{
-			m_camera->ProcessMouseDown(m_event);		
-		}
-	}
+	HandleEvent();
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_shadow_FBO);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	vec3 light_pos = { -2.0f, 4.0f, -1.0f };
-	mat4 ortho_proj, light_view;
-	ortho_proj = ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
-	light_view = lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-	mat4 light_proj = ortho_proj * light_view;
-
-	m_shaders["shadowMap"]->SetActive();
-	m_shaders["shadowMap"]->SetMat4("lightProjection", light_proj);
-	glCullFace(GL_FRONT);
-	RenderScene(*m_shaders["shadowMap"]);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	glCullFace(GL_BACK);
-	glViewport(0, 0, static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height));
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	mat4 p = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
-	mat4 v = m_camera->MyLookAt();
-	mat4 m = mat4(1.0f);
-	m = translate(m, light_pos);
-	m = scale(m, vec3(0.2f));
-
-	m_shaders["light"]->SetActive();
-	m_shaders["light"]->SetMat4("projection", p);
-	m_shaders["light"]->SetMat4("view", v);
-	m_shaders["light"]->SetMat4("model", m);
-	m_primitives[Shape::CUBE]->SetActive();
-	m_primitives[Shape::CUBE]->Draw();
-
-	m_shaders["shadow"]->SetActive();
-	m_shaders["shadow"]->SetMat4("projection", p);
-	m_shaders["shadow"]->SetMat4("view", v);
-
-	m_shaders["shadow"]->SetMat4("lightMatrix", light_proj);
-	m_shaders["shadow"]->SetVec3("lightPos", light_pos);
-	m_shaders["shadow"]->SetVec3("viewPos", m_camera->GetPos());
-
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
-
-	RenderScene(*m_shaders["shadow"]);
-
-	//glDisable(GL_DEPTH_TEST);
-	//m_shaders["frame"]->SetActive();
-	//glBindVertexArray(m_frame_VAO);
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, m_shadow_map);
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
+	LightPass();
 
 	SDL_GL_SwapWindow(m_window);
 }
 
+void Renderer::HandleEvent()
+{
+	//cout << "Handle Event" << endl;
+	SDL_Event event;
+
+	while (SDL_PollEvent(&event))
+	{
+		if (event.type == SDL_QUIT)
+		{
+			m_is_running = 0;
+		}
+
+		if (event.type == SDL_MOUSEBUTTONUP)
+		{
+			m_camera->ProcessMouseUp(event, m_window,
+				static_cast<int>(m_width / 2), static_cast<int>(m_height / 2));
+		}
+
+		if (event.type == SDL_MOUSEMOTION)
+		{
+			m_camera->ProcessMouseDown(event);
+		}
+	}
+}
+
+void Renderer::ShadowPass()
+{
+	//cout << "Render shadow map" << endl;
+	float near_plane = 1.0f;
+	float far_plane = 25.0f;
+	mat4 P_light = perspective(radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT,
+								near_plane, far_plane);
+	vector<mat4> matrices_light;
+
+	// Right Cubemap
+	mat4 V_light = lookAt(m_light_pos, m_light_pos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	matrices_light.push_back(P_light * V_light);
+	// Left Cubemap
+	V_light = lookAt(m_light_pos, m_light_pos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	matrices_light.push_back(P_light * V_light);
+	// Up Cubemap
+	V_light = lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	matrices_light.push_back(P_light * V_light);
+	// Down Cubemap
+	V_light = lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+	matrices_light.push_back(P_light * V_light);
+	// Front Cubemap
+	V_light = lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	matrices_light.push_back(P_light * V_light);
+	// Back Cubemap
+	V_light = lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	matrices_light.push_back(P_light * V_light);
+
+	//matrices_light.push_back(P_light * glm::lookAt(m_light_pos, m_light_pos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+	//matrices_light.push_back(P_light * glm::lookAt(m_light_pos, m_light_pos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+	//matrices_light.push_back(P_light * glm::lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
+	//matrices_light.push_back(P_light * glm::lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)));
+	//matrices_light.push_back(P_light * glm::lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+	//matrices_light.push_back(P_light * glm::lookAt(m_light_pos, m_light_pos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+
+
+	// Render scene to shadow cubemap
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	m_shadow_FBO->BindFramebuffer();
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	m_shaders["shadowMap"]->SetActive();
+
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		m_shaders["shadowMap"]->SetMat4("shadowMatrices[" + to_string(i) + "]", matrices_light[i]);
+	}
+	m_shaders["shadowMap"]->SetVec3("lightPos", m_light_pos);
+	m_shaders["shadowMap"]->SetFloat("far_plane", far_plane);
+
+	RenderScene(*m_shaders["shadowMap"]);
+}
+
+void Renderer::LightPass()
+{
+	//cout << "Render color map" << endl;
+
+
+	mat4 P = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
+	mat4 V = m_camera->MyLookAt();
+	mat4 M = mat4(1.0f);
+
+	M = translate(M, vec3(0.0f, 10.0f, 0.0));
+	m_shaders["planet"]->SetActive();
+	m_shaders["planet"]->SetMat4("projection", P);
+	m_shaders["planet"]->SetMat4("view", V);
+	m_shaders["planet"]->SetMat4("model", M);
+	m_models["planet"]->Draw(*m_shaders["planet"]);
+
+
+	M = mat4(1.0f);
+	M = translate(M, m_light_pos);
+	M = scale(M, vec3(0.1f));
+
+	m_shaders["light"]->SetActive();
+	m_shaders["light"]->SetMat4("projection", P);
+	m_shaders["light"]->SetMat4("view", V);
+	m_shaders["light"]->SetMat4("model", M);
+	m_primitives[Shape::CUBE]->SetActive();
+	m_primitives[Shape::CUBE]->Draw();
+
+	M = mat4(1.0f);
+	m_shaders["floor"]->SetActive();
+	m_shaders["floor"]->SetMat4("projection", P);
+	m_shaders["floor"]->SetMat4("view", V);
+	m_shaders["floor"]->SetMat4("model", M);
+
+	m_shaders["floor"]->SetVec3("viewPos", m_camera->GetPos());
+	m_shaders["floor"]->SetVec3("lightPos", m_light_pos);
+	m_shaders["floor"]->SetInt("blinn", true);
+
+	m_primitives[Shape::FLOOR]->SetActive();
+	glActiveTexture(GL_TEXTURE0);
+	m_texture->SetActive();
+	glActiveTexture(GL_TEXTURE1);
+	m_normal_map->SetActive();
+	m_primitives[Shape::FLOOR]->Draw();
+}
+
 void Renderer::RenderScene(Shader& shader)
 {
-	mat4 m = mat4(1.0f);
-	shader.SetMat4("model", m);
+	//cout << "RenderScene" << endl;
+	mat4 M = mat4(1.0f);
+	shader.SetMat4("model", M);
 	m_primitives[Shape::FLOOR]->SetActive();
 	m_primitives[Shape::FLOOR]->Draw();
 
-	m = mat4(1.0f);
-	m = translate(m, vec3(0.0f, 1.5f, 0.0f));
-	m = scale(m, vec3(0.5f));
-	shader.SetMat4("model", m);
+	M = translate(M, vec3(0.0, 10.0f, 0.0));
+	shader.SetMat4("model", M);
+	shader.SetInt("reverse_normals", 1);
+	m_primitives[Shape::FLOOR]->SetActive();
+	m_primitives[Shape::FLOOR]->Draw();
+
+	M = mat4(1.0f);
+	M = translate(M, vec3(0.0f, 1.5f, 0.0f));
+	M = scale(M, vec3(0.5f));
+	shader.SetMat4("model", M);
+	shader.SetInt("reverse_normals", 0);
 	m_primitives[Shape::CUBE]->SetActive();
 	m_primitives[Shape::CUBE]->Draw();
 
-	m = mat4(1.0f);
-	m = translate(m, vec3(2.0f, 0.5f, 1.0f));
-	m = scale(m, vec3(0.5f));
-	shader.SetMat4("model", m);
+	M = mat4(1.0f);
+	M = translate(M, vec3(2.0f, 0.5f, 1.0f));
+	M = scale(M, vec3(0.5f));
+	shader.SetMat4("model", M);
 	m_primitives[Shape::CUBE]->SetActive();
 	m_primitives[Shape::CUBE]->Draw();
 
-	m = mat4(1.0f);
-	m = translate(m, vec3(-1.0f, 0.0f, 2.0f));
-	m = rotate(m, radians(60.0f), normalize(vec3(1.0, 0.0, 1.0)));
-	m = scale(m, vec3(0.25f));
-	shader.SetMat4("model", m);
+	M = mat4(1.0f);
+	M = translate(M, vec3(-1.0f, 0.0f, 2.0f));
+	M = rotate(M, radians(60.0f), normalize(vec3(1.0, 0.0, 1.0)));
+	M = scale(M, vec3(0.25f));
+	shader.SetMat4("model", M);
 	m_primitives[Shape::CUBE]->SetActive();
 	m_primitives[Shape::CUBE]->Draw();
-}
 
-unique_ptr<Model> Renderer::LoadModel(const string& path, int amount, bool flip)
-{
-	//m_link = new Model();
-	unique_ptr<Model> model;
-	cout << "Load Model from " << path.c_str() << endl;
-	if (amount > 0)
-	{
-		// Set up model matrices for rocks
-
-		vector<mat4> matrices = vector<mat4>(amount);
-
-		srand(static_cast<unsigned int>(SDL_GetTicks()));
-		float r = 30.0f;
-
-		for (int i = 0; i < amount; ++i)
-		{
-			mat4 m = mat4(1.0f);
-
-			random_device rd;  // Will be used to obtain a seed for the random number engine
-			mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
-			float pi = static_cast<float>(M_PI);
-			uniform_real_distribution<float> angle(0.0f, 360.0f);
-			float a = angle(gen);
-			//cout << "Angle: " << a << endl;
-			float radian = a * (pi/180.0f);
-			
-			uniform_real_distribution<float> offset(-5.0f, 5.0f);
-
-
-			float x = sin(radian) * r + offset(gen);
-			float y = offset(gen) * 0.4f;
-			float z = cos(radian) * r + offset(gen);
-			
-			//cout << "random location: " << x << " " << y  << " " << z << endl;
-			m = translate(m, vec3(x, y, z));
-
-			uniform_real_distribution<float> sc(0.05f, 0.1f);
-			//float s = static_cast<float>((rand() % 20) / 100.0 + 0.05);
-			m = scale(m, vec3(sc(gen)));
-
-			uniform_real_distribution<float> rot(0.0f, 360.0f);
-			m = rotate(m, rot(gen), vec3(0.4f, 0.6f, 0.8f));
-
-			matrices[i] = m;
-		}
-		model = unique_ptr<Model>(new Model(matrices));
-	}
-	else
-	{
-		model = unique_ptr<Model>(new Model());
-	}
-
-	stbi_set_flip_vertically_on_load(flip);
-	if (!model->LoadModel(path))
-	{
-		printf("Renderer failed to load model %s \n", path.c_str());
-		return nullptr;
-	}
-
-	return model;
-}
-
-unique_ptr<Mesh> Renderer::LoadPrimitive(const Shape& shape)
-{
-	//cout << "Load Primitive!" << endl;
-
-	string v_path = "";
-	string i_path = "";
-	
-	switch (shape)
-	{
-		case(Shape::SQUARE):
-			v_path = "Vertices/Plane/Plane_Vertices_List.txt";
-			i_path = "Vertices/Plane/Plane_Indices_List.txt";
-			break;
-
-		case(Shape::CUBE):
-			v_path = "Vertices/Cube/Cube_Vertices_List.txt";
-			i_path = "Vertices/Cube/Cube_Indices_List.txt";
-			break;
-
-		case(Shape::FLOOR):
-			v_path = "Vertices/Plane/Floor_Vertices_List.txt";
-			i_path = "Vertices/Plane/Plane_Indices_List.txt";
-			break;
-
-		default:
-			cout << "Invalide Shape!" << endl;
-			return nullptr;
-	}
-
-	vector<Vertex> vertices = LoadVertices(v_path);
-	vector<unsigned int> indices = LoadIndices(i_path);
-
-	if (vertices.empty())
-	{
-		printf("Renderer Failed to load vertices \n");
-		return nullptr;
-	}
-
-	if (indices.empty())
-	{
-		printf("Renderer Failed to load indices \n");
-		return nullptr;
-	}
-
-	unique_ptr<Mesh> primitive(new Mesh(vertices, indices));
-	primitive->SetupMesh();
-
-	return primitive;
-}
-
-unique_ptr<Shader> Renderer::LoadShaders(const string& vert, const string& frag, const string& geom)
-{
-	cout << "Load Shader!" << endl;
-
-	unique_ptr<Shader> temp(new Shader());
-	if (!temp->LoadShaderFile(vert, frag, geom))
-	{
-		printf("Renderer Failed to load shader \n");
-		return nullptr;
-	}
-
-	return temp;
-}
-
-vector<Vertex> Renderer::LoadVertices(const string& vert_path)
-{
-	vector<Vertex> vertices;
-
-	//cout << "Load Vertices!" << endl;
-	
-	ifstream vertex_file(vert_path);
-	
-	if (!vertex_file.is_open())
-	{
-		cout << "Renderer Failed to open the vertex file " << vert_path << endl;
-		return {};
-	}
-
-	string line;
-	int index_tex = 0;
-	int index_nor = 0;
-	while (getline(vertex_file, line))
-	{
-		stringstream ss(line);
-		if (line[0] == '#')
-		{
-			//cout << "# ignore" << endl;
-			continue;
-		}
-		else if (line[0] == 'v')
-		{
-			//cout << "Vertex load" << endl;
-			m_type = 0;
-			continue;
-		}
-		else if (line[0] == 'n')
-		{
-			//cout << line << endl;
-			m_type = 1;
-			continue;
-		}
-		else if (line[0] == 't')
-		{
-			//cout << "Texture coordinate load" << endl;
-			m_type = 2;
-			continue;
-		}
-
-		if (m_type == 0)
-		{
-			Vertex vertex;
-			string vertex_x;
-			string vertex_y;
-			string vertex_z;
-
-			getline(ss, vertex_x, ',');
-			getline(ss, vertex_y, ',');
-			getline(ss, vertex_z, ',');
-
-
-			//vertex.position = position;
-			vertex.position.x = stof(vertex_x);
-			vertex.position.y = stof(vertex_y);
-			vertex.position.z = stof(vertex_z);
-			vertices.push_back(vertex);
-		}
-		else if (m_type == 1)
-		{
-			string normal_x;
-			string normal_y;
-			string normal_z;
-
-			getline(ss, normal_x, ',');
-			getline(ss, normal_y, ',');
-			getline(ss, normal_z);
-
-			Vertex& vertex = vertices[index_nor];
-
-			vertex.normal.x = stof(normal_x);
-			vertex.normal.y = stof(normal_y);
-			vertex.normal.z = stof(normal_z);
-			
-			++index_nor;
-		}
-		else if (m_type == 2)
-		{
-			string texture_x;
-			string texture_y;
-
-			getline(ss, texture_x, ',');
-			getline(ss, texture_y, ',');
-
-			//cout << texture_x << " " << texture_y << endl;
-
-			Vertex& vertex = vertices[index_tex];
-
-			vertex.texCoords.x = stof(texture_x);
-			vertex.texCoords.y = stof(texture_y);
-			++index_tex;
-		}
-	}
-	return vertices;
-}
-
-vector<unsigned int> Renderer::LoadIndices(const string& index_path)
-{
-	//cout << "Load indices!" << endl;
-
-	vector<unsigned int> indices;
-
-	ifstream index_file(index_path);
-
-	if (!index_file.is_open())
-	{
-		cout << "Renderer Failed to open the index file " << index_path << endl;
-	}
-
-	string line;
-
-	while (getline(index_file, line))
-	{
-		stringstream ss(line);
-		if (line[0] == '#')
-		{
-			continue;
-		}
-
-		string index;
-
-		while (getline(ss, index, ','))
-		{
-			const char* index_char = index.c_str();
-			unsigned int index_uint = strtoul(index_char, nullptr, 0);
-			indices.push_back(index_uint);
-		}
-
-	}
-
-	return indices;
-}
-
-bool Renderer::SetupShadow()
-{
-	cout << "Setup Quad for drawing framebuffer texture" << endl;
-
-	glGenVertexArrays(1, &m_frame_VAO);
-	glGenBuffers(1, &m_frame_VBO);
-	glBindVertexArray(m_frame_VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, m_frame_VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-
-	cout << "Setup Depth map" << endl;
-
-	// Framebuffer to store depth values(shadow map)
-	glGenFramebuffers(1, &m_shadow_FBO);
-	//glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_FBO);
-
-	// Texture for shadow framebuffer
-	glGenTextures(1, &m_shadow_map);
-	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	
-	if (glGetError() != GL_NO_ERROR)
-	{
-		cout << "error " << glGetError() << endl;
-		cout << m_shadow_map << endl;
-		return false;
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_FBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_shadow_map, 0);
-	
-	// Disable writes to color buffer, as shadow map will not output the color
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	
-	auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if ( status != GL_FRAMEBUFFER_COMPLETE)
-	{
-		cout << "Framebuffer error " << status << endl;
-		return false;
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	
-	return true;
+	M = mat4(1.0f);
+	M = translate(M, vec3(0.0, 7.0f, 0.0));
+	M = scale(M, vec3(0.6f));
+	shader.SetMat4("model", M);
+	m_primitives[Shape::CUBE]->SetActive();
+	m_primitives[Shape::CUBE]->Draw();
 }
 
 void Renderer::UnLoad()

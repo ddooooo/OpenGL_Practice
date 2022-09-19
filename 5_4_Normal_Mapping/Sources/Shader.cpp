@@ -3,25 +3,32 @@
 #include <fstream>
 #include <sstream>
 
-Shader::Shader() : m_vert_shader(0), m_frag_shader(0), m_geom_shader(0), m_shader_ID(0)
-{
-}
+Shader::Shader() : m_shader_ID(0) 
+{}
+
+Shader::Shader(const string & vert_path, const string & frag_path, const string & geom_path) :
+	m_shader_ID(0), m_vert_path(vert_path), m_frag_path(frag_path), m_geom_path(geom_path)
+{}
 
 Shader::~Shader()
-{
-}
+{}
 
-bool Shader::LoadShaderFile(const string& vert_path, const string& frag_path, const string& geom_path)
+bool Shader::LoadShaderFile()
 {
-	if (!CompileShader(vert_path, GL_VERTEX_SHADER, m_vert_shader) ||
-		!CompileShader(frag_path, GL_FRAGMENT_SHADER, m_frag_shader ))
+	cout << "Load Shader file " << endl;
+	GLuint vert_shader = 0;
+	GLuint frag_shader = 0;
+	GLuint geom_shader = 0;
+
+	if (!CompileShader(m_vert_path, GL_VERTEX_SHADER, vert_shader) ||
+		!CompileShader(m_frag_path, GL_FRAGMENT_SHADER, frag_shader ))
 	{
 		return false;
 	}
 
-	if (geom_path != "")
+	if (m_geom_path != "")
 	{
-		if (!CompileShader(geom_path, GL_GEOMETRY_SHADER, m_geom_shader))
+		if (!CompileShader(m_geom_path, GL_GEOMETRY_SHADER, geom_shader))
 		{
 			return false;
 		}
@@ -29,12 +36,12 @@ bool Shader::LoadShaderFile(const string& vert_path, const string& frag_path, co
 
 	m_shader_ID = glCreateProgram();
 
-	glAttachShader(m_shader_ID, m_vert_shader);
-	glAttachShader(m_shader_ID, m_frag_shader);
+	glAttachShader(m_shader_ID, vert_shader);
+	glAttachShader(m_shader_ID, frag_shader);
 
-	if (geom_path != "")
+	if (m_geom_path != "")
 	{
-		glAttachShader(m_shader_ID, m_geom_shader);
+		glAttachShader(m_shader_ID, geom_shader);
 	}
 
 	glLinkProgram(m_shader_ID);
@@ -50,12 +57,12 @@ bool Shader::LoadShaderFile(const string& vert_path, const string& frag_path, co
 		return false;
 	}
 
-	glDeleteShader(m_vert_shader);
-	glDeleteShader(m_frag_shader);
+	glDeleteShader(vert_shader);
+	glDeleteShader(frag_shader);
 
-	if (geom_path != "")
+	if (m_geom_path != "")
 	{
-		glDeleteShader(m_geom_shader);
+		glDeleteShader(geom_shader);
 	}
 
 	return true;
@@ -119,6 +126,7 @@ void Shader::UnLoad()
 
 void Shader::SetActive()
 {
+	//cout << "Shader SetActive " << m_shader_ID << endl;
 	glUseProgram(m_shader_ID);
 }
 

@@ -10,6 +10,7 @@ class Texture
 public:
 	Texture();
 	Texture(const string& path);
+	Texture(const string& path, const string& type);
 	~Texture();
 
 	bool LoadTexture();
@@ -23,11 +24,12 @@ public:
 	unsigned int GetTextureID() const { return m_texture_ID; };
 	
 	string GetPath() const { return m_path; }
-
+	string GetType() const { return m_type; }
 private:
 	unsigned int m_texture_ID;
 	int m_width;
 	int m_height;
 
 	string m_path;
+	string m_type;
 };

@@ -30,10 +30,16 @@
     <ClInclude Include="Headers\PointLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Headers\Primitive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Headers\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Headers\Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\ShadowCubemapFBO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Headers\SpotLight.h">
@@ -62,10 +68,16 @@
     <ClCompile Include="Sources\PointLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\Primitive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Sources\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Sources\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\ShadowCubemapFBO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Sources\SpotLight.cpp">
