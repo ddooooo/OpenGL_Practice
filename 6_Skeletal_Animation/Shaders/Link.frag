@@ -28,6 +28,8 @@ struct DirLight
 in vec3 fragPos;
 in vec3 normal;
 in vec2 texCoord;
+flat in ivec4 boneIDs;
+in vec4 weights;
 
 uniform Material mat;
 
@@ -36,19 +38,7 @@ uniform Texture tex;
 uniform vec3 viewPos;
 uniform DirLight dirLight;
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
-
-void main()
-{
-	vec3 norm = normalize(normal);
-	vec3 viewDir = normalize(viewPos - fragPos);
-	
-	// Directional Light
-	vec3 result = CalcDirLight(dirLight, norm, viewDir);
-
-	fragColor = vec4(1.0);
-
-}
+uniform int displayBoneIndex;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 {
@@ -85,4 +75,43 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 	vec3 specular = light.specular * specFactor * mat.specular;
 
 	return (ambient + diffuse + specular);
+}
+
+void main()
+{
+	vec3 norm = normalize(normal);
+	vec3 viewDir = normalize(viewPos - fragPos);
+	
+	// Directional Light
+	vec3 result = CalcDirLight(dirLight, norm, viewDir);
+
+	bool found = false;
+
+	for(int i=0; i<4; ++i)
+	{
+		if(boneIDs[i] == displayBoneIndex && displayBoneIndex >= 0)
+		{
+			if(weights[i] >= 0.7)
+			{
+				fragColor = vec4(1.0, 0.0, 0.0, 0.0) * weights[i];
+			}
+			else if(weights[i] >= 0.4 && weights[i] <= 0.6)
+			{
+				fragColor = vec4(0.0, 1.0, 0.0, 0.0) * weights[i];
+			}
+			else if(weights[i] >= 0.1)
+			{
+				fragColor = vec4(0.0, 0.0, 1.0, 0.0) * weights[i];
+			}
+
+			found = true;
+			break;
+		}
+	}
+
+	if(!found)
+	{
+		vec3 diffuse = vec3(texture(tex.texture_diffuse1, texCoord));
+		fragColor = vec4(diffuse, 1.0);
+	}
 }
