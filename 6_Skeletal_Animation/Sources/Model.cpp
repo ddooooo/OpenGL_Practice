@@ -1,11 +1,14 @@
 #include "Model.h"
 
-#include <stb_image.h>
-
 #include <fstream>
 #include <sstream>
 
-Model::Model(string const& path, bool gamma) : m_path(path), m_gamma_correction(gamma), m_bone_counter(0)
+using namespace std;
+using namespace Assimp;
+
+Model::Model(string const& path, bool gamma) 
+		: m_path(path), m_gamma_correction(gamma), m_root_transformation(1.0f),
+		  m_aiScene(), m_importer()
 {}
 
 void Model::Draw(Shader& shader)
@@ -22,15 +25,16 @@ void Model::Draw(Shader& shader)
 
 bool Model::LoadModel()
 {
-	cout << "Load model! " << m_path <<  endl;
+	cout << "Load model! " << m_path << endl;
 
-	Importer importer;
-	const aiScene* scene = importer.ReadFile(m_path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-													 aiProcess_FlipUVs | aiProcess_CalcTangentSpace );
-
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	m_aiScene = m_importer.ReadFile(m_path, aiProcess_Triangulate |
+									  aiProcess_GenSmoothNormals | 
+									  aiProcess_CalcTangentSpace);
+	
+	if (!m_aiScene || m_aiScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !m_aiScene->mRootNode)
 	{
-		cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << endl;
+		cout << "ERROR::ASSIMP:: " << m_importer.GetErrorString() << endl;
+		assert(0);
 		return false;
 	}
 
@@ -38,35 +42,55 @@ bool Model::LoadModel()
 	m_directory = m_path.substr(0, m_path.find_last_of('/'));
 	cout << "Directory: " << m_directory << endl;
 	
-	// Process ASSIMP's root node recursively
-	ProcessNode(scene->mRootNode, scene);
+	// Process ASSIMP's root node, and then recursively process its child node
+	aiNode* root_node = m_aiScene->mRootNode;
+	
+	m_root_transformation = ConvertMatrixToGLMFormat(root_node->mTransformation);
+	//cout << "Root node transformation: ";
+	//cout << m_root_transformation << endl;
 
+	ProcessNode(root_node, m_aiScene);
+	//cout << scene.use_count() << endl;
 	return true;
 }
 
 void Model::ProcessNode(aiNode* node, const aiScene* scene)
 {
 	cout << "Process aiNode " << node->mName.C_Str() << " meshes: " << node->mNumMeshes  << " childrens: " << node->mNumChildren << endl;
+	
+	// Node Transformation:
+	// coordinates of vertices of meshes from a node --> model space coordinate
+	// Ends up whole nodes placed at correct position 
+	mat4 node_transformation = ConvertMatrixToGLMFormat(node->mTransformation);
+	//cout << "Node transformation  : " << endl;
+	//cout << node_transformation << endl;
+	
+	mat4 adjust = { 1.0f,  0.0f,  0.0f, 0.0f,
+					0.0f,  0.0f,  -1.0f, 0.0f,
+					0.0f,  1.0f, 0.0f, 0.0f,
+					0.0f,  0.0f,  0.0f, 1.0f };
+
 	// Loop through all mesh indices in the node and process the actual meshes in the scene object
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
-
 		aiMesh* ai_mesh = scene->mMeshes[node->mMeshes[i]];
-		unique_ptr<Mesh> mesh = ProcessMesh(ai_mesh, scene, node->mName.C_Str());
+		unique_ptr<Mesh> mesh = ProcessMesh(ai_mesh, scene, node->mName.C_Str(), node_transformation);
 		mesh->SetupMesh();
+		mesh->SetMeshTransform(adjust);
 		m_meshes.push_back(move(mesh));
 	}
-	cout << endl;
+	//cout << endl;
 	// Process all the children node recursively for processing a mesh of each children node
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(node->mChildren[i], scene);
+		aiNode* child_node = node->mChildren[i];
+		ProcessNode(child_node, scene);
 	}
 }
 
-unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const string& name)
+unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const string& name, mat4& m)
 {
-
+	//cout << m << endl;
 	vector<VertexLayout> vertices;
 	vector<unsigned int> indices;
 	vector<shared_ptr<Texture>> textures;
@@ -78,9 +102,12 @@ unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const st
 	unsigned int num_indices = num_faces * 3;
 	unsigned int num_bones = mesh->mNumBones;
 	string mesh_name = mesh->mName.C_Str();
-	cout << "  Process aiMesh " << mesh_name << " vertices: " << num_vertices <<
-		    " indices: " << num_indices << " bones: " << num_bones << endl;
-	
+	//cout << "  Process aiMesh " << mesh_name << " vertices: " << num_vertices <<
+	//	    " indices: " << num_indices << " bones: " << num_bones << endl;
+	//
+	//cout << "Transform to ";
+	//cout << m << endl;
+
 	vec3 temp;
 	vec2 texCoords_temp;
 	for (unsigned int i = 0; i < num_vertices; ++i)
@@ -91,8 +118,12 @@ unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const st
 		temp.x = mesh->mVertices[i].x;
 		temp.y = mesh->mVertices[i].y;
 		temp.z = mesh->mVertices[i].z;
+		
+		vec4 pos = vec4(temp, 1.0f);
+		
+		pos = m * pos;
 		// Set position of each vertex
-		vertex.position = temp;
+		vertex.position = /*{ pos.x, pos.y, pos.z }; */temp;
 
 		//  Set normal of each vertex
 		if (mesh->HasNormals())
@@ -133,11 +164,12 @@ unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const st
 		LoadBones(vertices, mesh, scene);
 	}
 
-	cout << "  Num of loaded bones: " << m_bone_infos.size() << endl;
+	//cout << "  Num of loaded bones: " << m_bone_info_map.size() << endl;
 
 	// Load materials
-	aiMaterial* ai_material = scene->mMaterials[mesh->mMaterialIndex];
-	
+	shared_ptr<aiMaterial> ai_material = make_shared<aiMaterial>();
+	ai_material->CopyPropertyList(ai_material.get(), scene->mMaterials[mesh->mMaterialIndex]);
+
 	material = LoadMaterial(ai_material);
 
 	// Load Diffuse from texture
@@ -159,7 +191,7 @@ unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const st
 	return make_unique<Mesh>(name, vertices, indices, textures, material);
 }
 
-Material Model::LoadMaterial(aiMaterial* mat)
+Material Model::LoadMaterial(shared_ptr<aiMaterial> mat)
 {
 	aiString str;
 	Material material;
@@ -215,9 +247,9 @@ Material Model::LoadMaterial(aiMaterial* mat)
 	return material;
 }
 
-vector<shared_ptr<Texture>> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
+vector<shared_ptr<Texture>> Model::LoadMaterialTextures(shared_ptr<aiMaterial> mat, aiTextureType type, string typeName)
 {
-	cout << "    Load Material Texture " << typeName << " " << mat->GetTextureCount(type) << endl;
+	//cout << "    Load Material Texture " << typeName << " " << mat->GetTextureCount(type) << endl;
 
 	vector<shared_ptr<Texture>> textures;
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i)
@@ -227,8 +259,8 @@ vector<shared_ptr<Texture>> Model::LoadMaterialTextures(aiMaterial* mat, aiTextu
 		bool skip = false;
 		string path = m_directory + '/' + str.C_Str();
 
-		cout << "     texture " << i << " path: " << path << endl;
-		cout << "     Loaded Texture: " << endl;
+		//cout << "     texture " << i << " path: " << path << endl;
+		//cout << "     Loaded Texture: " << endl;
 		// Check if the texture was loaded before
 		for (unsigned int j = 0; j < m_textures_loaded.size(); ++j)
 		{
@@ -249,33 +281,34 @@ vector<shared_ptr<Texture>> Model::LoadMaterialTextures(aiMaterial* mat, aiTextu
 			assert(new_texture->LoadTexture() != false);
 			textures.push_back(new_texture);
 			m_textures_loaded.push_back(new_texture);
-			cout << " new texture: " << textures.back()->GetPath();
+			//cout << " new texture: " << textures.back()->GetPath();
 		}
 	}
-	cout << endl;
+	//cout << endl;
 	return textures;
 }
 
 bool Model::LoadBones(vector<VertexLayout>& vertices, aiMesh* mesh, const aiScene* scene)
 {
-	cout << "    LoadBones for each Mesh " << endl;
+	//cout << "    LoadBones for each Mesh " << endl;
 	for (unsigned int i = 0; i < mesh->mNumBones; ++i)
 	{
-		aiBone* ai_bone = mesh->mBones[i];
+		// make_shared is ok, as aiBone has deep copy constructor
+		shared_ptr<aiBone> ai_bone = make_shared<aiBone>(*mesh->mBones[i]);
 		if (!LoadSingleBone(vertices, ai_bone, i))
 		{
 			cerr << "FAILED TO LOAD BONE: " << ai_bone->mName.C_Str() << endl;
 			return false;
 		}
 	}
-	cout << endl;
+	//cout << endl;
 
 	return true;
 }
 
-bool Model::LoadSingleBone(vector<VertexLayout>& vertices, aiBone* bone, int bone_index)
+bool Model::LoadSingleBone(vector<VertexLayout>& vertices, shared_ptr<aiBone> bone, int bone_index)
 {
-	cout << "     Bone Index " << bone_index << " ";
+	//cout << "     Bone Index " << bone_index << " ";
 	string bone_name = bone->mName.C_Str();
 	int bone_ID = GetBoneID(bone);
 	if (bone_ID == -1)
@@ -286,9 +319,11 @@ bool Model::LoadSingleBone(vector<VertexLayout>& vertices, aiBone* bone, int bon
 	}
 
 	int num_weights = bone->mNumWeights;
-	cout << bone_name << ":  weights: " << num_weights << " bone id: " << bone_ID << endl;
+	//cout << bone_name << ":  weights: " << num_weights << " bone id: " << bone_ID << endl;
 	
-	auto matrix = bone->mOffsetMatrix;
+	auto matrix = ConvertMatrixToGLMFormat(bone->mOffsetMatrix);
+
+	//cout << "      Bone Offset Matrix: " << matrix << endl;
 
 	auto weights = bone->mWeights;
 	for (int i = 0; i < num_weights; ++i)
@@ -308,22 +343,22 @@ bool Model::LoadSingleBone(vector<VertexLayout>& vertices, aiBone* bone, int bon
 	return true;
 }
 
-int Model::GetBoneID(const aiBone* bone)
+int Model::GetBoneID(const shared_ptr<aiBone> bone)
 {
 	int bone_ID = -1;
 	string bone_name = bone->mName.C_Str();
 	// If the bone was loaded previously
-	if (m_bone_infos.find(bone_name) == m_bone_infos.end())
+	if (m_bone_info_map.find(bone_name) == m_bone_info_map.end())
 	{
 		BoneInfo new_bone_info;
-		new_bone_info.id = static_cast<int>(m_bone_infos.size());
-		//new_bone_info.offset = AssimpGLMHeplers::ConvertMatrixToGLMFormat()
-		m_bone_infos[bone_name] = new_bone_info;
+		new_bone_info.id = static_cast<int>(m_bone_info_map.size());
+		new_bone_info.offset = ConvertMatrixToGLMFormat(bone->mOffsetMatrix);
+		m_bone_info_map[bone_name] = new_bone_info;
 		bone_ID = new_bone_info.id;
 	}
 	else
 	{
-		bone_ID = m_bone_infos[bone_name].id;
+		bone_ID = m_bone_info_map[bone_name].id;
 	}
 
 	return bone_ID;
@@ -344,4 +379,60 @@ void Model::AddBoneInfo(VertexLayout& vertex, int bone_ID, float weight)
 	}
 }
 
+ostream& operator<<(ostream& os, aiMatrix4x4 m)
+{
+	return os << m.a1 << " " << m.a2 << " " << m.a3 << " " << m.a4 << " "
+		<< m.b1 << " " << m.b2 << " " << m.b3 << " " << m.b4 << " "
+		<< m.c1 << " " << m.c2 << " " << m.c3 << " " << m.c4 << " "
+		<< m.d1 << " " << m.d2 << " " << m.d3 << " " << m.d4;
+}
 
+mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat)
+{
+	mat4 mat;
+
+	mat[0][0] = aiMat.a1;
+	mat[1][0] = aiMat.a2;
+	mat[2][0] = aiMat.a3;
+	mat[3][0] = aiMat.a4;
+
+	mat[0][1] = aiMat.b1;
+	mat[1][1] = aiMat.b2;
+	mat[2][1] = aiMat.b3;
+	mat[3][1] = aiMat.b4;
+
+	mat[0][2] = aiMat.c1;
+	mat[1][2] = aiMat.c2;
+	mat[2][2] = aiMat.c3;
+	mat[3][2] = aiMat.c4;
+
+	mat[0][3] = aiMat.d1;
+	mat[1][3] = aiMat.d2;
+	mat[2][3] = aiMat.d3;
+	mat[3][3] = aiMat.d4;
+
+	return mat;
+}
+
+vec3 ConvertVectorToGLMFormat(const aiVector3D& aiVec)
+{
+	vec3 vec;
+
+	vec.x = aiVec.x;
+	vec.y = aiVec.y;
+	vec.z = aiVec.z;
+
+	return vec;
+}
+
+quat ConvertQuatToGLMFormat(const aiQuaternion& aiQuat)
+{
+	quat quat;
+
+	quat.w = aiQuat.w;
+	quat.x = aiQuat.x;
+	quat.y = aiQuat.y;
+	quat.z = aiQuat.z;
+
+	return quat;
+}

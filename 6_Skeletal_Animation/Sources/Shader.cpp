@@ -1,5 +1,5 @@
 #include "Shader.h"
-
+#include "Mesh.h"
 #include <fstream>
 #include <sstream>
 
@@ -152,5 +152,8 @@ void Shader::SetVec3(const string& name, float x, float y, float z) const
 
 void Shader::SetMat4(const string& name, mat4& matrix) const
 {
-	glUniformMatrix4fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, GL_FALSE, &matrix[0][0]);
+	//cout << "Set matrix " << name << ": ";
+	//cout << matrix << endl;
+	glUniformMatrix4fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, GL_FALSE, value_ptr(matrix));
+	//cout << endl;
 }

@@ -143,7 +143,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Headers\Animation.h" />
+    <ClInclude Include="Headers\Animator.h" />
+    <ClInclude Include="Headers\BoneTransform.h" />
     <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\Config.h" />
     <ClInclude Include="Headers\Light.h" />
     <ClInclude Include="Headers\Mesh.h" />
     <ClInclude Include="Headers\Model.h" />
@@ -156,6 +160,8 @@
     <ClInclude Include="Headers\Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Sources\Animator.cpp" />
+    <ClCompile Include="Sources\BoneTransform.cpp" />
     <ClCompile Include="Sources\Camera.cpp" />
     <ClCompile Include="Sources\Light.cpp" />
     <ClCompile Include="Sources\Main.cpp" />

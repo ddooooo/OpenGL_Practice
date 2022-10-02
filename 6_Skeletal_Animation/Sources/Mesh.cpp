@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iomanip> 
 
 #include "Mesh.h"
 
@@ -9,15 +9,14 @@ Mesh::Mesh(string name, vector<VertexLayout> vertices,
 		   Material material, vector<mat4> matrices)
 	: m_name(name), m_vertices(vertices), m_indices(indices), m_matrices(matrices),
 	  m_textures(textures), m_material(material),
-	  m_VAO(0), m_debug(true)
+	  m_VAO(0), m_mesh_transform(1.0f), m_debug(true)
 {}
 
 void Mesh::Draw()
 {
 	if (m_debug)
 	{
-		//cout << "Draw Primitive!" << endl;
-		//cout << m_indices.size() << endl;
+		cout << "Draw Primitive!" << endl;
 		m_debug = false;
 	}
 	glBindVertexArray(m_VAO);
@@ -34,15 +33,19 @@ void Mesh::Draw(Shader& shader)
 	unsigned int specular_index = 1;
 	unsigned int normal_index = 1;
 	unsigned int height_index = 1;
+	m_debug = false;
+	shader.SetActive();
 	
 	if (m_debug)
 	{
-		cout << "Draw mesh: " <<  m_name << ": " << m_indices.size() << " and " << m_vertices.size() << " and " << m_textures.size() << endl;
+		//cout << "Draw mesh: " <<  m_name << ": " << m_indices.size() << " and " << m_vertices.size() << " and " << m_textures.size() << endl;
+		//cout << "Transformation mesh: " << endl;
+		//cout << m_mesh_transform << endl;
 	}
+	shader.SetMat4("adjust", m_mesh_transform);
 
 	//glUniform1i(glGetUniformLocation(shader.GetShaderProgram))
 
-	shader.SetActive();
 
 	if (m_debug)
 	{
@@ -103,7 +106,7 @@ void Mesh::Draw(Shader& shader)
 		// Draw mesh(triangle) with vertices
 		if (m_debug)
 		{
-			cout << "Ready to draw meshes " << endl;
+			//cout << "Ready to draw meshes " << endl;
 			m_debug = false;
 		}
 		glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, nullptr);
@@ -128,12 +131,12 @@ void Mesh::Draw(Shader& shader)
 
 void Mesh::SetupMesh()
 {
-	cout << "Setup Mesh: " << m_vertices.size() << endl;
-	// Create vertex array objects, vertex buffering object, Element buffering object
-	cout << "Bone ids " << endl;
-	cout << m_vertices[0].bone_IDs[0] << " " << m_vertices[0].bone_IDs[1] << " " << m_vertices[0].bone_IDs[2] << " " << m_vertices[0].bone_IDs[3] << endl;
-	cout << (m_vertices[0].bone_IDs) << endl;
-	cout << endl;
+	//cout << "Setup Mesh: " << m_vertices.size() << endl;
+	//// Create vertex array objects, vertex buffering object, Element buffering object
+	//cout << "Bone ids " << endl;
+	//cout << m_vertices[0].bone_IDs[0] << " " << m_vertices[0].bone_IDs[1] << " " << m_vertices[0].bone_IDs[2] << " " << m_vertices[0].bone_IDs[3] << endl;
+	//cout << (m_vertices[0].bone_IDs) << endl;
+	//cout << endl;
 	unsigned int VBO;
 	unsigned int EBO;
 	//unsigned int IBO;
@@ -169,6 +172,10 @@ void Mesh::SetupMesh()
 	glEnableVertexAttribArray(BONE_WEIGHT_ATTRIB);
 	glVertexAttribPointer(BONE_WEIGHT_ATTRIB, 4, GL_FLOAT, GL_FALSE, sizeof(VertexLayout), (void*)offsetof(VertexLayout, weights));
 	
+	
+	glEnableVertexAttribArray(BONE_WEIGHT_ATTRIB);
+	glVertexAttribPointer(BONE_WEIGHT_ATTRIB, 4, GL_FLOAT, GL_FALSE, sizeof(VertexLayout), (void*)offsetof(VertexLayout, weights));
+	
 	/*if (m_matrices.size() > 1)
 	{
 		cout << "Setup instance mesh" << endl;
@@ -192,6 +199,11 @@ void Mesh::SetupMesh()
 	}*/
 
 	glBindVertexArray(0);
+}
+
+void Mesh::SetMeshTransform(const mat4& m)
+{
+	m_mesh_transform = m;
 }
 
 void Mesh::SetActive() const
@@ -221,7 +233,11 @@ ostream& operator<<(ostream& os, const mat3& m)
 
 ostream& operator<<(ostream& os, const mat4& m)
 {
-	return os << "\n" << m[0] << "\n" << m[1] << "\n" << m[2] << "\n" << m[3];
+	return os << fixed << setprecision(1) << "\n" 
+		      << m[0][0] << " " << m[1][0] << " " << m[2][0] << " " << m[3][0] << "\n"
+			  << m[0][1] << " " << m[1][1] << " " << m[2][1] << " " << m[3][1] << "\n"
+			  << m[0][2] << " " << m[1][2] << " " << m[2][2] << " " << m[3][2] << "\n"
+			  << m[0][3] << " " << m[1][3] << " " << m[2][3] << " " << m[3][3];
 }
 
 

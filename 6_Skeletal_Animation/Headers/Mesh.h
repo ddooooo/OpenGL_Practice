@@ -39,17 +39,6 @@ struct Material
 
 class Mesh
 {
-public:
-	Mesh(string name, vector<VertexLayout> vertices,
-		 vector<unsigned int> indices = {}, vector<shared_ptr<Texture>> textures = {}, 
-		 Material material = {}, vector<mat4> matrices = {});
-
-	// Render the mesh
-	void Draw();
-	void Draw(Shader& shader);
-
-	void SetupMesh();
-	void SetActive() const;
 private:
 	enum
 	{
@@ -70,7 +59,23 @@ private:
 	unsigned int m_VAO;
 	string m_name;
 
+	mat4 m_mesh_transform;
+
 	bool m_debug;
+
+public:
+	Mesh(string name, vector<VertexLayout> vertices,
+		 vector<unsigned int> indices = {}, vector<shared_ptr<Texture>> textures = {}, 
+		 Material material = {}, vector<mat4> matrices = {});
+
+	// Render the mesh
+	void Draw();
+	void Draw(Shader& shader);
+
+	// Setter functions
+	void SetupMesh();
+	void SetMeshTransform(const mat4& m);
+	void SetActive() const;
 };
 
 ostream& operator<<(ostream& os, const vec2& v);

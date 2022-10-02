@@ -30,9 +30,9 @@ bool Texture::LoadTexture()
 {
 	int n_channel = 0;
 	
-	cout << "    Load Texture from " << m_path << " type: " << m_type << endl;
+	//cout << "    Load Texture from " << m_path << " type: " << m_type << endl;
 
-	//stbi_set_flip_vertically_on_load(true); // Flip the image upside-down
+	stbi_set_flip_vertically_on_load(true); // Flip the image upside-down
 	
 	unsigned char* texture = stbi_load(m_path.c_str(), &m_width, &m_height, &n_channel, 0);
 
