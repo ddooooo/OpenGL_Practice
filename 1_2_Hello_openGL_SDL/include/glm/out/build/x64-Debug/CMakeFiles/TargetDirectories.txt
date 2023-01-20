@@ -1,0 +1,2 @@
+C:/Users/DOO/Documents/OpenGL_Practice/1_2_Hello_openGL_SDL/include/glm/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/DOO/Documents/OpenGL_Practice/1_2_Hello_openGL_SDL/include/glm/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
