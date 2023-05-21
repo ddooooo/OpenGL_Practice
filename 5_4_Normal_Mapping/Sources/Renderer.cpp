@@ -34,15 +34,15 @@ bool Renderer::Initialize(const float screen_width, const float screen_height)
 		return false;
 	}
 
-	if (!InitModel())
-	{
-		return false;
-	}
+	//if (!InitModel())
+	//{
+	//	return false;
+	//}
 
-	if (!InitTexture())
-	{
-		return false;
-	}
+	//if (!InitTexture())
+	//{
+	//	return false;
+	//}
 
 	m_camera = unique_ptr<Camera>(new Camera());
 	
@@ -109,17 +109,18 @@ bool Renderer::InitSetup()
 bool Renderer::InitPrimitive()
 {
 	cout << "InitPrimitive" << endl;
-	m_primitives[Shape::FLOOR] = unique_ptr<Primitive>(new Primitive(Shape::FLOOR));
-	m_primitives[Shape::SQUARE] = unique_ptr<Primitive>(new Primitive(Shape::SQUARE));
-	m_primitives[Shape::CUBE] = unique_ptr<Primitive>(new Primitive(Shape::CUBE));
-	for (auto& it : m_primitives)
-	{
-		if (!it.second->LoadPrimitive())
-		{
-			cerr << "Faield to load Primitive: " << it.first << endl;
-			return false;
-		}
-	}
+	m_primitives["Floor"] = unique_ptr<Primitive>(new Primitive("Models/Cube.txt"));
+	m_primitives["Floor"]->Load();
+	//m_primitives[Shape::SQUARE] = unique_ptr<Primitive>(new Primitive(Shape::SQUARE));
+	//m_primitives[Shape::CUBE] = unique_ptr<Primitive>(new Primitive(Shape::CUBE));
+	//for (auto& it : m_primitives)
+	//{
+	//	if (!it.second->LoadPrimitive())
+	//	{
+	//		cerr << "Faield to load Primitive: " << it.first << endl;
+	//		return false;
+	//	}
+	//}
 
 	return true;
 }
@@ -146,7 +147,7 @@ bool Renderer::InitShader()
 	cout << "InitShader" << endl;
 	
 	m_shaders["planet"] = unique_ptr<Shader>(new Shader("Shaders/Planet.vert", "Shaders/Planet.frag"));
-	m_shaders["floor"] = unique_ptr<Shader>(new Shader("Shaders/Floor.vert", "Shaders/Floor.frag"));
+	m_shaders["floor"] = unique_ptr<Shader>(new Shader("Shaders/Basic.vert", "Shaders/Basic.frag"));
 	m_shaders["light"] = unique_ptr<Shader>(new Shader("Shaders/Light.vert", "Shaders/Light.frag"));
 	
 	for (auto& it : m_shaders)
@@ -212,19 +213,35 @@ void Renderer::Render()
 {
 	//cout << "Render " << endl;
 	// Get current frame to calculate camera delta time 
-	float current_frame = (float)SDL_GetTicks() * 0.001f;
+	/*float current_frame = (float)SDL_GetTicks() * 0.001f;
 	float last_frame = m_camera->GetLastFrame();
 	m_camera->SetDeltaTime(current_frame - last_frame);
 	m_camera->SetLastFrame(current_frame);
 
-	m_camera->ProcessInput();
+	m_camera->ProcessInput();*/
+	SDL_Event event;
 
-	HandleEvent();
+	while (SDL_PollEvent(&event))
+	{
+		if (event.type == SDL_QUIT)
+		{
+			m_is_running = 0;
+		}
+	}
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	LightPass();
+	mat4 P = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
+	mat4 V = m_camera->MyLookAt();
+	mat4 M = mat4(1.0f);
+
+	m_shaders["floor"]->SetActive();
+	m_shaders["floor"]->SetMat4("projection", P);
+	m_shaders["floor"]->SetMat4("view", V);
+	m_shaders["floor"]->SetMat4("model", M);
+	m_primitives["Floor"]->SetActive();
+	m_primitives["Floor"]->Draw();
 
 	SDL_GL_SwapWindow(m_window);
 }
@@ -241,7 +258,7 @@ void Renderer::HandleEvent()
 			m_is_running = 0;
 		}
 
-		if (event.type == SDL_MOUSEBUTTONUP)
+		/*if (event.type == SDL_MOUSEBUTTONUP)
 		{
 			m_camera->ProcessMouseUp(event, m_window,
 				static_cast<int>(m_width / 2), static_cast<int>(m_height / 2));
@@ -250,7 +267,7 @@ void Renderer::HandleEvent()
 		if (event.type == SDL_MOUSEMOTION)
 		{
 			m_camera->ProcessMouseDown(event);
-		}
+		}*/
 	}
 }
 
@@ -310,53 +327,50 @@ void Renderer::ShadowPass()
 void Renderer::LightPass()
 {
 	//cout << "Render color map" << endl;
-
-
 	mat4 P = perspective(radians(m_camera->GetFov()), m_width / m_height, 0.1f, 100.0f);
 	mat4 V = m_camera->MyLookAt();
 	mat4 M = mat4(1.0f);
 
-	M = translate(M, vec3(0.0f, 10.0f, 0.0));
-	m_shaders["planet"]->SetActive();
-	m_shaders["planet"]->SetMat4("projection", P);
-	m_shaders["planet"]->SetMat4("view", V);
-	m_shaders["planet"]->SetMat4("model", M);
-	m_models["planet"]->Draw(*m_shaders["planet"]);
+	//M = translate(M, vec3(0.0f, 10.0f, 0.0));
+	//m_shaders["planet"]->SetActive();
+	//m_shaders["planet"]->SetMat4("projection", P);
+	//m_shaders["planet"]->SetMat4("view", V);
+	//m_shaders["planet"]->SetMat4("model", M);
+	//m_models["planet"]->Draw(*m_shaders["planet"]);
 
+	//M = mat4(1.0f);
+	//M = translate(M, m_light_pos);
+	//M = scale(M, vec3(0.1f));
 
-	M = mat4(1.0f);
-	M = translate(M, m_light_pos);
-	M = scale(M, vec3(0.1f));
+	//m_shaders["light"]->SetActive();
+	//m_shaders["light"]->SetMat4("projection", P);
+	//m_shaders["light"]->SetMat4("view", V);
+	//m_shaders["light"]->SetMat4("model", M);
+	//m_primitives[Shape::CUBE]->SetActive();
+	//m_primitives[Shape::CUBE]->Draw();
 
-	m_shaders["light"]->SetActive();
-	m_shaders["light"]->SetMat4("projection", P);
-	m_shaders["light"]->SetMat4("view", V);
-	m_shaders["light"]->SetMat4("model", M);
-	m_primitives[Shape::CUBE]->SetActive();
-	m_primitives[Shape::CUBE]->Draw();
-
-	M = mat4(1.0f);
+	//M = mat4(1.0f);
 	m_shaders["floor"]->SetActive();
 	m_shaders["floor"]->SetMat4("projection", P);
 	m_shaders["floor"]->SetMat4("view", V);
 	m_shaders["floor"]->SetMat4("model", M);
 
-	m_shaders["floor"]->SetVec3("viewPos", m_camera->GetPos());
-	m_shaders["floor"]->SetVec3("lightPos", m_light_pos);
-	m_shaders["floor"]->SetInt("blinn", true);
+	//m_shaders["floor"]->SetVec3("viewPos", m_camera->GetPos());
+	//m_shaders["floor"]->SetVec3("lightPos", m_light_pos);
+	//m_shaders["floor"]->SetInt("blinn", true);
 
-	m_primitives[Shape::FLOOR]->SetActive();
-	glActiveTexture(GL_TEXTURE0);
-	m_texture->SetActive();
-	glActiveTexture(GL_TEXTURE1);
-	m_normal_map->SetActive();
-	m_primitives[Shape::FLOOR]->Draw();
+	m_primitives["Floor"]->SetActive();
+	////glActiveTexture(GL_TEXTURE0);
+	////m_texture->SetActive();
+	////glActiveTexture(GL_TEXTURE1);
+	////m_normal_map->SetActive();
+	m_primitives["Floor"]->Draw();
 }
 
 void Renderer::RenderScene(Shader& shader)
 {
 	//cout << "RenderScene" << endl;
-	mat4 M = mat4(1.0f);
+	/*mat4 M = mat4(1.0f);
 	shader.SetMat4("model", M);
 	m_primitives[Shape::FLOOR]->SetActive();
 	m_primitives[Shape::FLOOR]->Draw();
@@ -395,7 +409,7 @@ void Renderer::RenderScene(Shader& shader)
 	M = scale(M, vec3(0.6f));
 	shader.SetMat4("model", M);
 	m_primitives[Shape::CUBE]->SetActive();
-	m_primitives[Shape::CUBE]->Draw();
+	m_primitives[Shape::CUBE]->Draw();*/
 }
 
 void Renderer::UnLoad()

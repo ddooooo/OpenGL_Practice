@@ -1,0 +1,18 @@
+# v - vertex position
+v 10.0, -0.5, 10.0
+v -10.0, -0.5, 10.0
+v -10.0, -0.5, -10.0
+v 10.0, -0.5, -10.0
+# vn - vertex normal
+vn 0.0, 1.0, 0.0
+vn 0.0, 1.0, 0.0
+vn 0.0, 1.0, 0.0
+vn 0.0, 1.0, 0.0
+# vt - vertex texture coordinate
+vt 10.0, 10.0 
+vt 0.0, 10.0
+vt 0.0, 0.0
+vt 10.0, 0.0
+# f - indices
+f 0, 1, 2 
+f 0, 2, 3

@@ -34,12 +34,12 @@ bool Renderer::Initialize(const float screen_width, const float screen_height)
 		return false;
 	}
 
-	if (!InitTexture())
-	{
-		return false;
-	}
+	//if (!InitTexture())
+	//{
+	//	return false;
+	//}
 
-	InitLight();
+	//InitLight();
 
 	m_camera = unique_ptr<Camera>(new Camera());
 	
@@ -106,64 +106,55 @@ bool Renderer::InitSetup()
 bool Renderer::InitPrimitive()
 {
 	cout << "InitPrimitive" << endl;
-	m_primitives[Shape::CUBE] = make_unique<Primitive>(Shape::CUBE);
-	m_primitives[Shape::SQUARE] = make_unique<Primitive>(Shape::SQUARE);
-	for (auto& it : m_primitives)
-	{
-		if (!it.second->LoadPrimitive())
-		{
-			cerr << "Faield to load Primitive: " << it.first << endl;
-			return false;
-		}
-		else
-		{
-			cout << "Successfully load primitive: " << it.first << endl;
-		}
-	}
+	m_square = make_unique<Primitive>("Models/Square.txt");
+	m_square->Load();
 	return true;
 }
 
-bool Renderer::InitModel()
-{
-	cout << "InitModel" << endl;
-	m_models["planet"] = unique_ptr<Model>(new Model("Models/planet/planet.obj"));
-
-	for (auto& it : m_models)
-	{
-		if (!it.second->LoadModel())
-		{
-			cout << "Failed to load model " << it.first << endl;
-			return false;
-		}
-	}
-
-	return true;
-}
+//bool Renderer::InitModel()
+//{
+//	cout << "InitModel" << endl;
+//	m_models["planet"] = unique_ptr<Model>(new Model("Models/planet/planet.obj"));
+//
+//	for (auto& it : m_models)
+//	{
+//		if (!it.second->LoadModel())
+//		{
+//			cout << "Failed to load model " << it.first << endl;
+//			return false;
+//		}
+//	}
+//
+//	return true;
+//}
 
 bool Renderer::InitShader()
 {
 	cout << "InitShader" << endl;
 	
-	m_shaders["brick"] = unique_ptr<Shader>(new Shader("Shaders/Brick.vert", "Shaders/Brick.frag"));
-	m_shaders["light"] = unique_ptr<Shader>(new Shader("Shaders/Light.vert", "Shaders/Light.frag"));
-	
-	for (auto& it : m_shaders)
-	{
-		if (!it.second->LoadShaderFile())
-		{
-			cout << "Failed to load shader file " << it.first << endl;
-			return false;
-		}
-		else
-		{
-			cout << "Successfully load shader: " << it.first << endl;
-		}
-	}
+	m_shaders["basic"] = unique_ptr<Shader>(new Shader("Shaders/Basic.vert", "Shaders/Basic.frag"));
+	m_shaders["basic"]->LoadShaderFile();
 
-	m_shaders["brick"]->SetActive();
-	m_shaders["brick"]->SetInt("diffuseMap", 0);
-	m_shaders["brick"]->SetInt("normalMap", 1);
-	m_shaders["brick"]->SetInt("heightMap", 2);
+	//m_shaders["brick"] = unique_ptr<Shader>(new Shader("Shaders/Brick.vert", "Shaders/Brick.frag"));
+	//m_shaders["light"] = unique_ptr<Shader>(new Shader("Shaders/Light.vert", "Shaders/Light.frag"));
+	//
+	//for (auto& it : m_shaders)
+	//{
+	//	if (!it.second->LoadShaderFile())
+	//	{
+	//		cout << "Failed to load shader file " << it.first << endl;
+	//		return false;
+	//	}
+	//	else
+	//	{
+	//		cout << "Successfully load shader: " << it.first << endl;
+	//	}
+	//}
+
+	//m_shaders["brick"]->SetActive();
+	//m_shaders["brick"]->SetInt("diffuseMap", 0);
+	//m_shaders["brick"]->SetInt("normalMap", 1);
+	//m_shaders["brick"]->SetInt("heightMap", 2);
 
 	return true;
 }
@@ -267,38 +258,46 @@ void Renderer::RenderScene()
 	mat4 V = m_camera->MyLookAt();
 	mat4 M = mat4(1.0f);
 
-	vec3 light_pos = m_point_light->GetPos();
+	m_shaders["basic"]->SetActive();
+	m_shaders["basic"]->SetMat4("projection", P);
+	m_shaders["basic"]->SetMat4("view", V);
+	m_shaders["basic"]->SetMat4("model", M);
+	m_square->Draw();
 
-	M = mat4(1.0f);
-	M = translate(M, light_pos);
-	M = scale(M, vec3(0.1f));
+	//vec3 light_pos = m_point_light->GetPos();
 
-	m_shaders["light"]->SetActive();
-	m_shaders["light"]->SetMat4("projection", P);
-	m_shaders["light"]->SetMat4("view", V);
-	m_shaders["light"]->SetMat4("model", M);
-	m_primitives[Shape::CUBE]->SetActive();
-	m_primitives[Shape::CUBE]->Draw();
+	//M = mat4(1.0f);
+	//M = translate(M, light_pos);
+	//M = scale(M, vec3(0.1f));
 
-	M = mat4(1.0f);
-	m_shaders["brick"]->SetActive();
-	m_shaders["brick"]->SetMat4("projection", P);
-	m_shaders["brick"]->SetMat4("view", V);
-	m_shaders["brick"]->SetMat4("model", M);
 
-	m_shaders["brick"]->SetVec3("viewPos", m_camera->GetPos());
-	m_shaders["brick"]->SetVec3("lightPos", light_pos);
 
-	m_shaders["brick"]->SetFloat("height_scale", 0.1f);
+	//m_shaders["light"]->SetActive();
+	//m_shaders["light"]->SetMat4("projection", P);
+	//m_shaders["light"]->SetMat4("view", V);
+	//m_shaders["light"]->SetMat4("model", M);
+	//m_primitives[Shape::CUBE]->SetActive();
+	//m_primitives[Shape::CUBE]->Draw();
 
-	m_primitives[Shape::SQUARE]->SetActive();
-	glActiveTexture(GL_TEXTURE0);
-	m_brick_textures["diffuse"]->SetActive();
-	glActiveTexture(GL_TEXTURE1);
-	m_brick_textures["normal"]->SetActive();
-	glActiveTexture(GL_TEXTURE2);
-	m_brick_textures["height"]->SetActive();
-	m_primitives[Shape::SQUARE]->Draw();
+	//M = mat4(1.0f);
+	//m_shaders["brick"]->SetActive();
+	//m_shaders["brick"]->SetMat4("projection", P);
+	//m_shaders["brick"]->SetMat4("view", V);
+	//m_shaders["brick"]->SetMat4("model", M);
+
+	//m_shaders["brick"]->SetVec3("viewPos", m_camera->GetPos());
+	//m_shaders["brick"]->SetVec3("lightPos", light_pos);
+
+	//m_shaders["brick"]->SetFloat("height_scale", 0.1f);
+
+	//m_primitives[Shape::SQUARE]->SetActive();
+	//glActiveTexture(GL_TEXTURE0);
+	//m_brick_textures["diffuse"]->SetActive();
+	//glActiveTexture(GL_TEXTURE1);
+	//m_brick_textures["normal"]->SetActive();
+	//glActiveTexture(GL_TEXTURE2);
+	//m_brick_textures["height"]->SetActive();
+	//m_primitives[Shape::SQUARE]->Draw();
 }
 
 void Renderer::UnLoad()

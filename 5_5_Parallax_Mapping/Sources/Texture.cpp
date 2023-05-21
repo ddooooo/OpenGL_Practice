@@ -4,7 +4,7 @@
 #include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <stb/stb_image.h>
 
 Texture::Texture() : m_texture_ID(0), m_width(0), m_height(0), m_path("")
 {

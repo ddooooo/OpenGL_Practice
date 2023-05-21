@@ -8,7 +8,14 @@ Mesh::Mesh(vector<VertexLayout> vertices, vector<unsigned int> indices,
 		   vector<unique_ptr<Texture>> textures, Material material, vector<mat4> matrices)
 	: m_vertices(vertices), m_indices(indices), m_matrices(matrices),
 	  m_textures(move(textures)), m_material(material), m_VAO(0), m_debug(true)
-{}
+{
+
+	for (auto& it : m_vertices)
+	{
+		cout << it.position.x << " " << it.position.y << " " << it.position.z << endl;
+	}
+
+}
 
 void Mesh::Draw()
 {
@@ -18,6 +25,7 @@ void Mesh::Draw()
 		//cout << m_indices.size() << endl;
 		m_debug = false;
 	}
+
 	glBindVertexArray(m_VAO);
 	// Already stored indices array into element(index) buffer object in setupmesh function,
 	// so the last argument should be nullptrt
@@ -126,7 +134,7 @@ void Mesh::Draw(Shader& shader)
 
 void Mesh::SetupMesh()
 {
-	//cout << "SetupMesh with " << m_matrices.size() << endl;
+	cout << "SetupMesh" << endl;
 	// Create vertex array objects, vertex buffering object, Element buffering object
 	
 	unsigned int VBO;
@@ -140,11 +148,11 @@ void Mesh::SetupMesh()
 	glBindVertexArray(m_VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(VertexLayout), &m_vertices[0], GL_STATIC_DRAW);
-
-	// Load a data into element buffers object
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int), &m_indices[0], GL_STATIC_DRAW);
 	
+	cout << "Size: " <<  sizeof(VertexLayout) << endl;
+
 	// Position
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexLayout), (void*)0);

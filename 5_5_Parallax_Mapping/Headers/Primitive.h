@@ -10,31 +10,24 @@ using namespace std;
 class Primitive
 {
 public:
-	enum class Shape
-	{
-		SQUARE = 0,
-		CUBE,
-		FLOOR,
-	};
-
-	Primitive(Shape shape);
+	Primitive(const string path);
 	~Primitive();
 
-	bool LoadPrimitive();
+	virtual bool Load();
 
 	void SetActive();
 	void Draw();
 
-	friend ostream& operator<<(ostream&, const Shape&);
-private:
-	unique_ptr<Mesh> m_mesh;
-	
-	vector<VertexLayout> LoadVertices(const string& vert_path);
-	vector<unsigned int> LoadIndices(const string& index_path);
-	
-	Shape m_shape;
-	const string m_vert_path;
-	const string m_index_path;
-};
+	//friend ostream& operator<<(ostream&, const Shape&);
 
-ostream& operator<<(ostream& os, const Primitive::Shape& shape);
+protected:
+	const string m_path;
+	unique_ptr<Mesh> m_mesh;
+	vector<VertexLayout> m_layouts;
+	vector<unsigned int> m_indices;
+
+	bool LoadVertices();
+	//vector<unsigned int> LoadIndices(const string& index_path);
+
+
+};

@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
-#include <stb_image.h>
+#include <stb/stb_image.h>
 #include <unordered_map>
 
 #include "Model.h"
@@ -21,7 +21,7 @@
 
 using namespace std;
 using namespace glm;
-typedef Primitive::Shape Shape;
+//typedef Primitive::Shape Shape;
 
 class Renderer
 {
@@ -56,7 +56,7 @@ private:
 	SDL_GLContext m_context;
 
 	unordered_map<string, unique_ptr<Model>> m_models;
-	unordered_map<Primitive::Shape, unique_ptr<Primitive>> m_primitives;
+	unordered_map<string, unique_ptr<Primitive>> m_primitives;
 	unordered_map<string, unique_ptr<Shader>> m_shaders;
 	
 	unique_ptr<ShadowCubemapFBO> m_shadow_FBO;

@@ -227,7 +227,7 @@ vector<unsigned int> Primitive::LoadIndices(const string& index_path)
 		while (getline(ss, index, ','))
 		{
 			const char* index_char = index.c_str();
-			unsigned int index_uint = strtoul(index_char, nullptr, 0);
+			unsigned int index_uint = stoul(index_char, nullptr, 0);
 			indices.push_back(index_uint);
 		}
 	}

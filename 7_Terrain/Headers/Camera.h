@@ -49,6 +49,4 @@ public:
 	// Setter
 	void SetDeltaTime(float deltaTime) { mDeltaTime = deltaTime; };
 	void SetLastFrame(float lastFrame) { mLastFrame = lastFrame; };
-
-
 };

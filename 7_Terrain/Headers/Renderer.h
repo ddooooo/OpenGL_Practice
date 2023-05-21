@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
-#include <stb_image.h>
+#include <stb/stb_image.h>
 #include <unordered_map>
 
 #include "Model.h"
