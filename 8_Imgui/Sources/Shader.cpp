@@ -15,8 +15,14 @@ bool Shader::loadShaderFile(const string& vert_path, const string& frag_path, co
 	GLuint frag_shader = 0;
 	GLuint geom_shader = 0;
 
-	if (!CompileShader(vert_path, GL_VERTEX_SHADER, vert_shader) || !CompileShader(frag_path, GL_FRAGMENT_SHADER, frag_shader))
+	if (!CompileShader(vert_path, GL_VERTEX_SHADER, vert_shader) || 
+		!CompileShader(frag_path, GL_FRAGMENT_SHADER, frag_shader))
 		return false;
+
+	m_shader_ID = glCreateProgram();
+
+	glAttachShader(m_shader_ID, vert_shader);
+	glAttachShader(m_shader_ID, frag_shader);
 
 	if (geom_path != "")
 		glAttachShader(m_shader_ID, geom_shader);

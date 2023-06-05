@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{ee872e62-bc61-4c3f-a9ae-d9f5dcad0f20}</ProjectGuid>
+    <ProjectGuid>{517f7031-80ef-4912-9097-505a957fd365}</ProjectGuid>
     <RootNamespace>My7Terrain</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -59,34 +59,16 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\OpenGLPropertySheet.props" />
-    <Import Project="OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheet.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\OpenGLPropertySheet.props" />
-    <Import Project="OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheet.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheet.props" />
     <Import Project="..\OpenGLPropertySheet.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\OpenGLPropertySheet.props" />
-    <Import Project="OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheetLaptop.props" />
-    <Import Project="..\..\..\..\..\vclib\OpenGLPropertySheet.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -158,6 +140,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Sources\Animator.cpp" />
+    <ClCompile Include="Sources\BoneTransform.cpp" />
+    <ClCompile Include="Sources\Camera.cpp" />
+    <ClCompile Include="Sources\Light.cpp" />
+    <ClCompile Include="Sources\Main.cpp" />
+    <ClCompile Include="Sources\Mesh.cpp" />
+    <ClCompile Include="Sources\Model.cpp" />
+    <ClCompile Include="Sources\PointLight.cpp" />
+    <ClCompile Include="Sources\Primitive.cpp" />
+    <ClCompile Include="Sources\Renderer.cpp" />
+    <ClCompile Include="Sources\Shader.cpp" />
+    <ClCompile Include="Sources\ShadowCubemapFBO.cpp" />
+    <ClCompile Include="Sources\SpotLight.cpp" />
+    <ClCompile Include="Sources\TerrainMesh.cpp" />
+    <ClCompile Include="Sources\Texture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="Headers\Animation.h" />
     <ClInclude Include="Headers\Animator.h" />
     <ClInclude Include="Headers\BoneTransform.h" />
@@ -176,21 +175,21 @@
     <ClInclude Include="Headers\Texture.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Sources\Animator.cpp" />
-    <ClCompile Include="Sources\BoneTransform.cpp" />
-    <ClCompile Include="Sources\Camera.cpp" />
-    <ClCompile Include="Sources\Light.cpp" />
-    <ClCompile Include="Sources\Main.cpp" />
-    <ClCompile Include="Sources\Mesh.cpp" />
-    <ClCompile Include="Sources\Model.cpp" />
-    <ClCompile Include="Sources\PointLight.cpp" />
-    <ClCompile Include="Sources\Primitive.cpp" />
-    <ClCompile Include="Sources\Renderer.cpp" />
-    <ClCompile Include="Sources\Shader.cpp" />
-    <ClCompile Include="Sources\ShadowCubemapFBO.cpp" />
-    <ClCompile Include="Sources\SpotLight.cpp" />
-    <ClCompile Include="Sources\TerrainMesh.cpp" />
-    <ClCompile Include="Sources\Texture.cpp" />
+    <None Include="Shaders\Light.frag" />
+    <None Include="Shaders\Light.vert" />
+    <None Include="Shaders\Terrain.frag" />
+    <None Include="Shaders\Terrain.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\Terrain.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Vertices\Cube\Cube_Indices_List.txt" />
+    <Text Include="Vertices\Cube\Cube_Vertices_List.txt" />
+    <Text Include="Vertices\Cube\Skybox_Vertices_List.txt" />
+    <Text Include="Vertices\Plane\Floor_Vertices_List.txt" />
+    <Text Include="Vertices\Plane\Plane_Indices_List.txt" />
+    <Text Include="Vertices\Plane\Plane_Vertices_List.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

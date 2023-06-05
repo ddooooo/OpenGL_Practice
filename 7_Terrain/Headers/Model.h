@@ -12,7 +12,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <stb_image.h>
+#include <stb/stb_image.h>
 
 #include "Mesh.h"
 #include "Shader.h"

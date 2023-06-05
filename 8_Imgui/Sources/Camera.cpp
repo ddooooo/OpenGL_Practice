@@ -41,7 +41,7 @@ void Camera::processMouseDown(SDL_Event event)
 		float sensitivity = 0.1f;
 
 		m_x_offset = static_cast<float>(x) * sensitivity;
-		m_y_offset = static_cast<float>(y) * sensitivity;
+		m_y_offset = -static_cast<float>(y) * sensitivity;
 
 		if (m_first_click)
 		{
@@ -70,44 +70,46 @@ void Camera::processMouseDown(SDL_Event event)
 	}
 }
 
-void Camera::processMouseUp(SDL_Event event, SDL_Window* window, int x, int y)
+void Camera::processMouseUp(SDL_Event event, SDL_GL_Window* window)
 {
 	SDL_ShowCursor(SDL_TRUE);
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 	m_first_click = true;
-	if (m_x_offset <= 0.00001 && m_y_offset <= 0.00001) return;
-	SDL_WarpMouseInWindow(window, x, y);
+	if (m_x_offset <= 0.0001 && m_y_offset <= 0.0001) return;
+	SDL_WarpMouseInWindow(window->getWindow(), 
+						static_cast<int>(window->getWidth()/2), 
+						static_cast<int>(window->getHeight()/2));
 }
 
 void Camera::updateCamera()
 {
 	glm::vec3 forward;
-	float yaw_rad = glm::radians(m_yaw);
-	float pitch_rad = glm::radians(m_pitch);
+	float yaw = glm::radians(m_yaw);
+	float pitch = glm::radians(m_pitch);
 
-	forward.x = cos(yaw_rad) * cos(pitch_rad);
-	forward.y = sin(pitch_rad);
-	forward.z = sin(yaw_rad) * cos(pitch_rad);
+	forward.x = cos(yaw) * cos(pitch);
+	forward.y = sin(pitch);
+	forward.z = sin(yaw) * cos(pitch);
 
 	m_forward = normalize(forward);
 }
 
-glm::mat4 Camera::MyLookAt()
+glm::mat4 Camera::camera2pixel()
 {
 	glm::vec3 right = normalize(cross(m_forward, m_up));
 	glm::vec3 new_up = cross(right, m_forward);
 
-	glm::mat4 rotation = { right.x, new_up.x, -m_forward.x, 0,
-						   right.y, new_up.y, -m_forward.y, 0,
-						   right.z, new_up.z, -m_forward.z, 0,
-						   0,		 0,	       0,	   1 };
+	glm::mat4 R = { right.x, new_up.x, -m_forward.x, 0,
+					right.y, new_up.y, -m_forward.y, 0,
+			     	right.z, new_up.z, -m_forward.z, 0,
+					0,		 0,	        0,	         1 };
 
-	glm::mat4 translate = glm::mat4(1.0f);
-	translate[3][0] = -m_pos.x;
-	translate[3][1] = -m_pos.y;
-	translate[3][2] = -m_pos.z;
+	glm::mat4 t = glm::mat4(1.0f);
+	t[3][0] = -m_pos.x;
+	t[3][1] = -m_pos.y;
+	t[3][2] = -m_pos.z;
 
-	glm::mat4 view = rotation * translate;
+	glm::mat4 view = R * t;
 
 	return view;
 }

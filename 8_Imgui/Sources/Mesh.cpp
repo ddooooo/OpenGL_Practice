@@ -111,7 +111,7 @@ void Mesh::loadMeshToBuffers()
 void Mesh::draw()
 {
 	bind();
-	glDrawElements(GL_TRIANGLES, (int)m_indices.size(), GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, nullptr);
 	//glDrawArrays(GL_TRIANGLES, 0, 3);
 	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	unbind();

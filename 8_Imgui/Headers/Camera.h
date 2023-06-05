@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <SDL.h>
+#include <SDL_GL_Window.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -36,10 +37,10 @@ public:
 
 	void processInput();
 	void processMouseDown(SDL_Event event);
-	void processMouseUp(SDL_Event event, SDL_Window* window, int x, int y);
+	void processMouseUp(SDL_Event event, SDL_GL_Window* window);
 	void updateCamera();
 
-	glm::mat4 MyLookAt();
+	glm::mat4 camera2pixel();
 
 	float getDeltaTime() { return m_delta_time; };
 	float getLastFrame() { return m_last_frame; };

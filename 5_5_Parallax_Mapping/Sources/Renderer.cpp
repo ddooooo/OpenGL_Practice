@@ -34,10 +34,10 @@ bool Renderer::Initialize(const float screen_width, const float screen_height)
 		return false;
 	}
 
-	//if (!InitTexture())
-	//{
-	//	return false;
-	//}
+	if (!InitTexture())
+	{
+		return false;
+	}
 
 	//InitLight();
 
@@ -269,8 +269,6 @@ void Renderer::RenderScene()
 	//M = mat4(1.0f);
 	//M = translate(M, light_pos);
 	//M = scale(M, vec3(0.1f));
-
-
 
 	//m_shaders["light"]->SetActive();
 	//m_shaders["light"]->SetMat4("projection", P);

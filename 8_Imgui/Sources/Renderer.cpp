@@ -44,31 +44,71 @@ void Renderer::run()
 
 void Renderer::render()
 {
+	float current_frame = (float)SDL_GetTicks() * 0.001f;
+	float last_frame = m_camera->getLastFrame();
+	m_camera->setDeltaTime(current_frame - last_frame);
+	m_camera->setLastFrame(current_frame);
+	m_camera->processInput();
+
+	handleInput();
+
+	renderImGui();
+
+	m_sdl_window->clearWindow();
+	renderScene();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	m_sdl_window->swapWindow();
+}
+
+void Renderer::handleInput()
+{
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
 		if (event.type == SDL_QUIT)
-			m_is_running = false;
+			m_is_running = 0;
+
+		if (event.type == SDL_MOUSEBUTTONUP)
+			m_camera->processMouseUp(event, m_sdl_window.get());
+
+		if (event.type == SDL_MOUSEMOTION)
+			m_camera->processMouseDown(event);
 	}
+}
 
-	m_sdl_window->clearWindow();
-	
-	//renderScene();
+void Renderer::renderImGui()
+{
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
 
-	m_shader->load();
-	m_model->draw();
-	m_sdl_window->swapWindow();
+	static float f = 0.0f;
+	static int counter = 0;
+
+	ImGui::Begin("Hello, world!");                          
+	ImGui::Text("This is some useful text.");              
+
+	if (ImGui::Button("Button"))
+		counter++;
+	ImGui::SameLine();
+	ImGui::Text("counter = %d", counter);
+
+	float frameRate = ImGui::GetIO().Framerate;
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / frameRate, frameRate);
+	ImGui::End();
+
+	// Rendering
+	ImGui::Render();
 }
 
 void Renderer::renderScene()
 {
 	mat4 P = glm::perspective(glm::radians(45.0f), 1024.0f / 720.0f, 0.1f, 100.0f);
-	mat4 V = m_camera->MyLookAt();
+	mat4 V = m_camera->camera2pixel();
 	mat4 M = mat4(1.0f);
 
 	m_shader->load();
 	m_shader->setPVM(P, V, M);
-
 	m_model->draw();
 }
 

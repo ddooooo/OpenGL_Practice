@@ -18,8 +18,9 @@ public:
 	void run();
 	void render();
 
-	//void handleInput();
+	void handleInput();
 	void renderScene();
+	void renderImGui();
 
 	void end();
 

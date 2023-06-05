@@ -13,6 +13,68 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Shaders">
+      <UniqueIdentifier>{e92a1dd7-00cb-4797-8159-d0873a8537a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Textures">
+      <UniqueIdentifier>{610ccd30-a983-40a7-9072-6cb076394596}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Vertices">
+      <UniqueIdentifier>{bfa1110e-e440-47f0-8971-e8bfd420d7df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Vertices\Cube">
+      <UniqueIdentifier>{47a0d8e4-86a9-4209-96b8-8fc72fe509f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Vertices\Plane">
+      <UniqueIdentifier>{9ef799ce-787e-4ca8-9190-0331731bbec9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Sources\Animator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\BoneTransform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\PointLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Primitive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\ShadowCubemapFBO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\SpotLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\TerrainMesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Animation.h">
@@ -57,58 +119,50 @@
     <ClInclude Include="Headers\SpotLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Headers\Texture.h">
+    <ClInclude Include="Headers\TerrainMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Headers\TerrainMesh.h">
+    <ClInclude Include="Headers\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Sources\Animator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\BoneTransform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Light.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\PointLight.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Primitive.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\ShadowCubemapFBO.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\SpotLight.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Texture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\TerrainMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <None Include="Shaders\Light.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Light.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Terrain.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Terrain.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\Terrain.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Vertices\Cube\Cube_Vertices_List.txt">
+      <Filter>Resource Files\Vertices\Cube</Filter>
+    </Text>
+    <Text Include="Vertices\Cube\Skybox_Vertices_List.txt">
+      <Filter>Resource Files\Vertices\Cube</Filter>
+    </Text>
+    <Text Include="Vertices\Cube\Cube_Indices_List.txt">
+      <Filter>Resource Files\Vertices\Cube</Filter>
+    </Text>
+    <Text Include="Vertices\Plane\Plane_Vertices_List.txt">
+      <Filter>Resource Files\Vertices\Plane</Filter>
+    </Text>
+    <Text Include="Vertices\Plane\Floor_Vertices_List.txt">
+      <Filter>Resource Files\Vertices\Plane</Filter>
+    </Text>
+    <Text Include="Vertices\Plane\Plane_Indices_List.txt">
+      <Filter>Resource Files\Vertices\Plane</Filter>
+    </Text>
   </ItemGroup>
 </Project>
